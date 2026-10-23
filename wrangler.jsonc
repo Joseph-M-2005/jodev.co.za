@@ -1,0 +1,6 @@
+{
+  "name": "jodev",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./public" },
+  "routes": [{ "pattern": "jodev.co.za", "custom_domain": true }]
+}
