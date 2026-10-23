@@ -1,6 +1,9 @@
 {
   "name": "jodev",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./public" },
-  "routes": [{ "pattern": "jodev.co.za", "custom_domain": true }]
+  "assets": { "directory": "./dist", "not_found_handling": "404-page" },
+  "routes": [
+    { "pattern": "jodev.co.za", "custom_domain": true },
+    { "pattern": "www.jodev.co.za", "custom_domain": true }
+  ]
 }
