@@ -1,0 +1,56 @@
+@import '@fontsource/press-start-2p';
+@import '@fontsource-variable/pixelify-sans';
+
+:root {
+  --bg: #0b0d1a;
+  --text: #8fa3e8;
+  --blue-bright: #12a2e5;
+  --blue: #0578f1;
+  --blue-mid: #1e7adc;
+  --indigo: #3f59c6;
+  --indigo-deep: #1f4eab;
+  --purple: #5a44bf;
+  --purple-deep: #4a3ca8;
+  --shade: #303273;
+  --shade-dark: #272a5d;
+
+  --font-heading: 'Press Start 2P', ui-monospace, monospace;
+  --font-body: 'Pixelify Sans Variable', ui-monospace, monospace;
+
+  /* One pixel-art pixel. Stepped (not fluid) so the logo and Press Start 2P stay crisp. */
+  --px: 4px;
+
+  color-scheme: dark;
+}
+
+@media (min-width: 600px) and (min-height: 600px) { :root { --px: 6px; } }
+@media (min-width: 1200px) and (min-height: 800px) { :root { --px: 8px; } }
+@media (min-width: 2000px) and (min-height: 1200px) { :root { --px: 12px; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 1rem/1.5 var(--font-body);
+}
+
+h1, h2, h3 { font-family: var(--font-heading); font-weight: 400; }
+
+img, canvas { image-rendering: pixelated; }
+
+a { color: var(--blue-bright); }
+
+.center {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.center h1 { margin: 0; font-size: calc(var(--px) * 4); letter-spacing: 0.2em; text-transform: uppercase; }
+/* The logo is drawn on a 56-pixel grid */
+.logo { width: calc(var(--px) * 56); height: auto; }
