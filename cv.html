@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Joseph Mitchell - CV</title>
+  <meta name="description" content="CV of Joseph Mitchell, frontend software developer and IT support technician in Gqeberha, South Africa.">
+  <meta name="theme-color" content="#0b0d1a">
+  <link rel="canonical" href="https://jodev.co.za/cv">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:type" content="profile">
+  <meta property="og:url" content="https://jodev.co.za/cv">
+  <meta property="og:title" content="Joseph Mitchell - CV">
+  <meta property="og:description" content="Frontend software developer and IT support technician in Gqeberha, South Africa.">
+  <meta property="og:image" content="https://jodev.co.za/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="jodev pixel art logo">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/src/cv.css">
+</head>
+<body>
+  <main class="cv">
+    <div class="cv-bar">
+      <a href="/" class="cv-back">&lt; Back</a>
+      <button type="button" id="print" class="cv-print">Print / PDF</button>
+    </div>
+    <header class="cv-head">
+      <a href="/"><img src="/favicon.svg" alt="jodev.co.za home" class="cv-logo"></a>
+      <div>
+        <h1>Joseph Mitchell</h1>
+        <p class="cv-role">Frontend Software Developer &amp; IT Support Technician</p>
+        <ul class="cv-contact">
+          <li>Gqeberha, South Africa</li>
+          <li><a href="mailto:joseph@jodev.co.za">joseph@jodev.co.za</a></li>
+          <li><a href="https://www.linkedin.com/in/joseph-mitchell-2005-profile/">linkedin.com/in/joseph-mitchell-2005-profile</a></li>
+          <li><a href="https://github.com/Joseph-M-2005">github.com/Joseph-M-2005</a></li>
+          <li><a href="https://jodev.co.za">jodev.co.za</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <div>
+      <section>
+        <h2>Profile</h2>
+        <p>
+          I'm a frontend software developer and IT support technician at AR Collect, working across
+          software development, integrations, automation and technical support for our users.
+          Working on both sides shows me how software works behind the scenes and where real users
+          run into trouble, so I build interfaces that are user friendly and intuitive. I particularly
+          enjoy finding practical ways to automate repetitive work.
+        </p>
+      </section>
+
+      <section>
+        <h2>Experience</h2>
+
+        <article class="job">
+          <h3>Frontend Software Developer &amp; IT Support Technician</h3>
+          <p class="job-meta"><span>AR Collect</span> <span>Aug 2025 - Present</span></p>
+          <ul>
+            <li>Built the front end of MailBuddy, a QuickBooks-connected web app for email campaigns, payment reminders and invoice payments: 40+ screens in Next.js, React, TypeScript and Tailwind CSS, on a Spring Boot backend.</li>
+            <li>Build API integrations, including the QuickBooks API, and work with AWS services such as Amazon SES for email delivery, authentication and related infrastructure.</li>
+            <li>Work with Python, SQL, Docker and WordPress, and automate repetitive processes using Claude Code and other AI assisted development tools.</li>
+            <li>Support users with data inaccuracies, sync problems with QuickBooks, Xero and Sage, account configuration and general software usage, following documented procedures and investigating deeper issues independently.</li>
+          </ul>
+        </article>
+
+        <article class="job">
+          <h3>IT Support Technician</h3>
+          <p class="job-meta"><span>Self-employed, freelance</span> <span>Dec 2020 - Present</span></p>
+          <ul>
+            <li>On-site IT support for residents of Redhouse and surrounds: computers, internet and phones.</li>
+            <li>Computer assembly, repair and troubleshooting across hardware, software and operating systems.</li>
+            <li>Built a reputation for reliability and excellent customer service.</li>
+          </ul>
+        </article>
+
+        <article class="job">
+          <h3>Woodworker</h3>
+          <p class="job-meta"><span>Good Shepherd Toys, full-time</span> <span>Aug 2023 - Dec 2024</span></p>
+          <ul>
+            <li>Gap year role doing hands-on woodworking as part of a team.</li>
+            <li>Worked to deadlines in a professional, full-time business environment.</li>
+          </ul>
+        </article>
+      </section>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Skills</h2>
+        <p class="label">Development</p>
+        <ul class="chips">
+          <li>TypeScript</li><li>React</li><li>Next.js</li><li>Tailwind CSS</li><li>Python</li><li>SQL</li><li>Docker</li>
+          <li>WordPress</li><li>API integrations</li><li>AWS (SES)</li><li>Claude Code</li><li>UI design</li>
+        </ul>
+        <p class="label">Support</p>
+        <ul class="chips">
+          <li>Customer support</li><li>Troubleshooting</li><li>Hardware &amp; repair</li>
+          <li>Operating systems</li><li>QuickBooks</li><li>Xero</li><li>Sage</li>
+        </ul>
+        <p class="label">Other</p>
+        <ul class="chips">
+          <li>Communication</li><li>Problem solving</li><li>Teamwork</li><li>Driver's licence</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Certification</h2>
+        <h3>Certified in Cybersecurity (CC)</h3>
+        <p>ISC2<br>Issued Jun 2025, expires Jun 2028<br>Credential ID 2663816</p>
+      </section>
+
+      <section>
+        <h2>Education</h2>
+        <h3>General Educational Development (GED)</h3>
+        <p>NQF level 4</p>
+      </section>
+    </aside>
+  </main>
+  <script type="module">
+    document.getElementById('print').addEventListener('click', () => print())
+  </script>
+</body>
+</html>
