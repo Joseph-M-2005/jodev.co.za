@@ -19,13 +19,24 @@
 
   /* One pixel-art pixel. Stepped (not fluid) so the logo and Press Start 2P stay crisp. */
   --px: 4px;
+  --b: calc(var(--px) / 2);
+  /* Press Start 2P sizes stay on multiples of 8px */
+  --fs-h1: 24px;
+  --fs-h2: 16px;
+  --fs-ui: 12px;
 
   color-scheme: dark;
 }
 
-@media (min-width: 600px) and (min-height: 600px) { :root { --px: 6px; } }
-@media (min-width: 1200px) and (min-height: 800px) { :root { --px: 8px; } }
-@media (min-width: 2000px) and (min-height: 1200px) { :root { --px: 12px; } }
+@media (min-width: 600px) and (min-height: 600px) {
+  :root { --px: 6px; --fs-h1: 32px; --fs-h2: 24px; --fs-ui: 16px; }
+}
+@media (min-width: 1200px) and (min-height: 800px) {
+  :root { --px: 8px; --fs-h1: 48px; --fs-h2: 32px; --fs-ui: 16px; }
+}
+@media (min-width: 2000px) and (min-height: 1200px) {
+  :root { --px: 12px; --fs-h1: 72px; --fs-h2: 48px; --fs-ui: 24px; }
+}
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -34,6 +45,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 400 1rem/1.5 var(--font-body);
+  /* Pixelify's fi/fl ligatures render as an odd "A" */
+  font-variant-ligatures: none;
 }
 
 h1, h2, h3 { font-family: var(--font-heading); font-weight: 400; }
@@ -41,6 +54,8 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 400; }
 img, canvas { image-rendering: pixelated; }
 
 a { color: var(--blue-bright); }
+
+:focus-visible { outline: var(--b) solid var(--blue-bright); outline-offset: calc(var(--b) * 2); }
 
 .center {
   min-height: 100dvh;
@@ -54,3 +69,153 @@ a { color: var(--blue-bright); }
 .center h1 { margin: 0; font-size: calc(var(--px) * 4); letter-spacing: 0.2em; text-transform: uppercase; }
 /* The logo is drawn on a 56-pixel grid */
 .logo { width: calc(var(--px) * 56); height: auto; }
+
+.container { width: min(100% - 2rem, 72rem); margin-inline: auto; }
+
+.skip-link {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
+  padding: 0.75rem 1rem;
+  background: var(--blue-bright);
+  color: var(--bg);
+  font: var(--fs-ui)/1 var(--font-heading);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+
+/* Pixel UI: four hard shadows draw a border with notched corners */
+.panel, .btn {
+  box-shadow:
+    0 calc(var(--b) * -1) 0 0 var(--edge),
+    0 var(--b) 0 0 var(--edge),
+    calc(var(--b) * -1) 0 0 0 var(--edge),
+    var(--b) 0 0 0 var(--edge);
+}
+.panel { --edge: var(--indigo); background: var(--shade-dark); }
+
+.btn {
+  --edge: var(--blue-bright);
+  display: inline-block;
+  padding: calc(var(--px) * 3) calc(var(--px) * 4);
+  background: var(--blue-bright);
+  color: var(--bg);
+  font: var(--fs-ui)/1 var(--font-heading);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: transform 80ms steps(2);
+}
+.btn-secondary { --edge: var(--indigo); background: transparent; color: var(--text); }
+.btn:hover { transform: translateY(calc(var(--b) * -1)); }
+.btn:active { transform: translateY(var(--b)); }
+
+.site-header { padding-block: calc(var(--px) * 4); }
+.site-header .container,
+.site-footer .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  font: var(--fs-ui)/1 var(--font-heading);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.brand img { width: 56px; height: auto; }
+.nav-list { display: flex; flex-wrap: wrap; gap: 1rem calc(var(--px) * 4); margin: 0; padding: 0; list-style: none; }
+.nav-list a {
+  color: var(--text);
+  font: var(--fs-ui)/1 var(--font-heading);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.nav-list a:hover {
+  color: var(--blue-bright);
+  text-decoration: underline;
+  text-decoration-thickness: var(--b);
+  text-underline-offset: calc(var(--b) * 3);
+}
+
+/* Footer sits at the bottom even when the page is short */
+#root { min-height: 100dvh; display: flex; flex-direction: column; }
+main { flex: 1; display: flex; flex-direction: column; }
+
+.hero { flex: 1; display: grid; align-items: center; padding-block: calc(var(--px) * 8) calc(var(--px) * 12); }
+.hero-grid { display: grid; gap: 2rem; align-items: center; }
+.hero-logo { order: -1; width: calc(var(--px) * 56); height: auto; justify-self: center; }
+@media (min-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr auto; }
+  .hero-logo { order: 0; }
+}
+.kicker { margin: 0 0 1rem; color: var(--blue-bright); font-size: 1.25rem; }
+.hero h1 { margin: 0 0 1.5rem; font-size: var(--fs-h1); line-height: 1.4; }
+.cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  margin-left: 0.2em;
+  vertical-align: -0.1em;
+  background: var(--blue-bright);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+.lead { max-width: 36ch; margin: 0 0 2rem; font-size: 1.25rem; }
+.actions { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 4); }
+
+.section { padding-block: calc(var(--px) * 12); }
+.section h2 { margin: 0 0 calc(var(--px) * 6); font-size: var(--fs-h2); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: calc(var(--px) * 6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.grid > li { display: flex; flex-direction: column; }
+@media (min-width: 700px) { .levels { grid-template-columns: 1fr 1fr; } }
+.card {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: calc(var(--px) * 3);
+  padding: calc(var(--px) * 5);
+  font-size: 1.125rem;
+}
+.card h3 { margin: 0; font-size: var(--fs-ui); }
+.card p { margin: 0; }
+.num { color: var(--blue-bright); font: var(--fs-ui)/1 var(--font-heading); }
+
+.level { position: relative; color: var(--text); text-decoration: none; transition: transform 80ms steps(2); }
+.level h3 { font-size: var(--fs-h2); }
+.level p { padding-right: 2em; }
+.level:hover { --edge: var(--blue-bright); transform: translateY(calc(var(--b) * -1)); }
+.go {
+  position: absolute;
+  right: calc(var(--px) * 5);
+  bottom: calc(var(--px) * 5);
+  color: var(--blue-bright);
+  font: var(--fs-h2)/1 var(--font-heading);
+}
+
+.site-footer {
+  padding-block: calc(var(--px) * 8);
+  border-top: var(--b) solid var(--shade);
+  font: var(--fs-ui)/1.5 var(--font-heading);
+}
+.site-footer p { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor { animation: none; }
+  .btn, .level { transition: none; }
+  .btn:hover, .btn:active, .level:hover { transform: none; }
+}
