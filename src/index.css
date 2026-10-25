@@ -155,6 +155,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   .hero-grid { grid-template-columns: 1fr auto; }
   .hero-logo { order: 0; }
 }
+.placeholder { text-align: center; }
 .kicker { margin: 0 0 1rem; color: var(--blue-bright); font-size: 1.25rem; }
 .hero h1 { margin: 0 0 1.5rem; font-size: var(--fs-h1); line-height: 1.4; }
 .cursor {
