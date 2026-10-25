@@ -61,7 +61,8 @@ export default {
 
     try {
       await WorkerMailer.send(
-        { host: SMTP_HOST, port: 465, secure: true, credentials: { username: ME, password: env.SMTP_PASSWORD } },
+        // authType must be set: worker-mailer defaults to an empty list and then refuses to log in
+        { host: SMTP_HOST, port: 465, secure: true, credentials: { username: ME, password: env.SMTP_PASSWORD }, authType: ['plain', 'login'] },
         { from: { name: 'jodev contact form', email: ME }, to: ME, reply: email || undefined, subject: `Contact form: ${name}`, text },
       )
     } catch (err) {
