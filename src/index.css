@@ -153,11 +153,13 @@ main { flex: 1; display: flex; flex-direction: column; }
 
 .hero { flex: 1; display: grid; align-items: center; padding-block: calc(var(--px) * 8) calc(var(--px) * 12); }
 .hero-grid { display: grid; gap: 2rem; align-items: center; }
-.hero-logo { order: -1; width: calc(var(--px) * 56); height: auto; justify-self: center; }
+/* Desktop only: on phones it pushed the intro below the fold, and the header logo is enough */
+.hero-logo { display: none; width: calc(var(--px) * 56); height: auto; justify-self: center; }
 @media (min-width: 900px) {
   .hero-grid { grid-template-columns: 1fr auto; }
-  .hero-logo { order: 0; }
+  .hero-logo { display: block; }
 }
+.nowrap { white-space: nowrap; }
 .placeholder { text-align: center; }
 .kicker { margin: 0 0 1rem; color: var(--blue-bright); font-size: 1.25rem; }
 .hero h1 { margin: 0 0 1.5rem; font-size: var(--fs-h1); line-height: 1.4; }
@@ -211,6 +213,26 @@ main { flex: 1; display: flex; flex-direction: column; }
   font: var(--fs-h2)/1 var(--font-heading);
 }
 
+/* Raised button with an offset shadow: CV Back/Print and contact Back */
+.btn-raised {
+  display: inline-block;
+  padding: 0.75rem 1rem;
+  border: 0;
+  background: var(--blue-bright);
+  color: var(--bg);
+  /* Same size as the site nav: 12px on phones, 16px from 600px up */
+  font: 400 var(--fs-ui) var(--font-heading);
+  text-decoration: none;
+  box-shadow: 4px 4px 0 var(--purple-deep);
+  cursor: pointer;
+}
+.btn-raised:hover { background: var(--blue-mid); }
+.btn-raised:active { translate: 4px 4px; box-shadow: none; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn-raised { transition: translate 0.15s steps(2), box-shadow 0.15s steps(2); }
+  .btn-raised:hover:not(:active) { translate: -2px -2px; box-shadow: 6px 6px 0 var(--purple-deep); }
+}
+.back { margin-bottom: calc(var(--px) * 6); }
 .contact h1 { margin: 0 0 1rem; font-size: var(--fs-h1); line-height: 1.4; }
 .contact-grid { display: grid; gap: calc(var(--px) * 8); align-items: start; }
 @media (min-width: 900px) { .contact-grid { grid-template-columns: 2fr 1fr; } }
@@ -226,7 +248,8 @@ main { flex: 1; display: flex; flex-direction: column; }
   border: 0;
   background: var(--bg);
   color: var(--text);
-  font: inherit;
+  /* What people type stays in a plain readable font; 1rem also stops iOS zooming in on focus */
+  font: 1rem/1.5 system-ui, sans-serif;
 }
 .input:focus { --edge: var(--blue-bright); }
 textarea.input { resize: vertical; }

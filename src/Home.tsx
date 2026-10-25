@@ -4,7 +4,8 @@ export default function Home() {
       <div className="container hero-grid">
         <div>
           <p className="kicker">Hi, I'm Joseph Mitchell</p>
-          <h1>I Build Stuff<span className="cursor" aria-hidden="true" /></h1>
+          {/* nowrap keeps the cursor on the same line as the last word on narrow phones */}
+          <h1>I Build <span className="nowrap">Stuff<span className="cursor" aria-hidden="true" /></span></h1>
           <p className="lead">
             Frontend developer in Gqeberha, South Africa. I build interfaces people find easy to use,
             and I love automating the boring parts.

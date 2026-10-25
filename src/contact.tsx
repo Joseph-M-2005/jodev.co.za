@@ -68,6 +68,7 @@ function Contact() {
   return (
     <section className="section contact">
       <div className="container">
+        <a className="btn-raised back" href="/"><span aria-hidden="true">&lt; </span>Back</a>
         <h1>Contact</h1>
         <p className="lead">Got a project, a job or a question? Send me a message and I'll get back to you.</p>
 
