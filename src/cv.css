@@ -37,18 +37,6 @@
 .cv-head > div { flex: 1 1 18rem; }
 .cv .cv-contact { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
 
-.cv-print, .cv-back {
-  padding: 0.75rem 1rem;
-  border: 0;
-  background: var(--blue-bright);
-  color: var(--bg);
-  font: 400 1rem var(--font-heading);
-  text-decoration: none;
-  box-shadow: 4px 4px 0 var(--purple-deep);
-  cursor: pointer;
-}
-.cv-print:hover, .cv-back:hover { background: var(--blue-mid); }
-.cv-print:active, .cv-back:active { translate: 4px 4px; box-shadow: none; }
 .cv-bar { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 1rem; }
 
 .cv h2 {
@@ -108,8 +96,6 @@
   .job:hover { translate: 0.5rem 0; }
   .chips li { transition: translate 0.15s steps(2); }
   .chips li:hover { translate: 0 -0.25rem; }
-  .cv-print, .cv-back { transition: translate 0.15s steps(2), box-shadow 0.15s steps(2); }
-  .cv-print:hover:not(:active), .cv-back:hover:not(:active) { translate: -2px -2px; box-shadow: 6px 6px 0 var(--purple-deep); }
 }
 @keyframes hop { 50% { translate: 0 calc(var(--px) * -2); } }
 @keyframes blink { 50% { background: var(--purple); } }
