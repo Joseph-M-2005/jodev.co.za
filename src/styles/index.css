@@ -87,7 +87,7 @@ a { color: var(--blue-bright); }
 .skip-link:focus { transform: none; }
 
 /* Pixel UI: four hard shadows draw a border with notched corners */
-.panel, .btn, .input {
+.panel, .btn, .input, .photo, .game, .sign, .node {
   box-shadow:
     0 calc(var(--b) * -1) 0 0 var(--edge),
     0 var(--b) 0 0 var(--edge),
@@ -233,7 +233,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   .btn-raised:hover:not(:active) { translate: -2px -2px; box-shadow: 6px 6px 0 var(--purple-deep); }
 }
 .back { margin-bottom: calc(var(--px) * 6); }
-.contact h1 { margin: 0 0 1rem; font-size: var(--fs-h1); line-height: 1.4; }
+.contact h1, .about h1 { margin: 0 0 1rem; font-size: var(--fs-h1); line-height: 1.4; }
 .contact-grid { display: grid; gap: calc(var(--px) * 8); align-items: start; }
 @media (min-width: 900px) { .contact-grid { grid-template-columns: 2fr 1fr; } }
 .contact .panel { display: grid; gap: calc(var(--px) * 4); padding: calc(var(--px) * 5); font-size: 1.125rem; }
@@ -259,6 +259,197 @@ textarea.input { resize: vertical; }
 .form-error::before { content: '! ' / ''; color: var(--blue-bright); font-family: var(--font-heading); }
 .direct-list { display: grid; gap: calc(var(--px) * 2); margin: 0; padding: 0; list-style: none; overflow-wrap: anywhere; }
 
+.split { display: grid; gap: calc(var(--px) * 8); align-items: center; }
+@media (min-width: 900px) { .split { grid-template-columns: 3fr 2fr; } }
+/* Real photos, not pixel art: smooth scaling instead of the global pixelated img rule */
+.photo {
+  --edge: var(--indigo);
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: var(--shade-dark);
+  image-rendering: auto;
+}
+.photo-wide { aspect-ratio: 3 / 2; }
+.split > .photo { max-width: 28rem; justify-self: center; }
+.note { margin: calc(var(--px) * 6) 0 0; font-size: 1.125rem; }
+.stats { grid-template-columns: 1fr 1fr; }
+.stat { font-size: 2rem; line-height: 1.2; }
+.jumps-title { margin: calc(var(--px) * 12) 0 calc(var(--px) * 2); font-size: var(--fs-ui); }
+.jumps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 16rem));
+  gap: calc(var(--px) * 6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 700px) { .jumps { grid-template-columns: repeat(4, minmax(0, 16rem)); } }
+.jumps figure { margin: 0; }
+.jumps figcaption { margin-top: calc(var(--px) * 3); }
+/* One hop per hover, like pressing jump */
+@keyframes hop { 50% { transform: translateY(calc(var(--px) * -4)); } }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .jumps li:hover .photo { animation: hop 400ms steps(4); }
+}
+
+/* "The path so far": every level on one screen along a path, the runner runs between them.
+   The scene is 72 scene pixels tall at var(--b) each, so its art lines up with the runner's pixels. */
+.game {
+  --edge: var(--indigo);
+  --line: calc(var(--b) * 14); /* ground height, matches GROUND in pathArt.tsx */
+  --node: max(calc(var(--b) * 9), 28px);
+  position: relative;
+  height: calc(var(--b) * 72);
+  overflow: hidden;
+  background: linear-gradient(#141735, var(--shade-dark));
+}
+.game-scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+.star.twinkle { animation: blink 2.4s steps(1) infinite; }
+/* One scene pixel per step, across and round again */
+.cloud { animation: drift 160s steps(460) infinite; }
+@keyframes drift { from { transform: translateX(-30px); } to { transform: translateX(430px); } }
+.game-hud {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: calc(var(--px) * 2) calc(var(--px) * 3);
+  font: var(--fs-ui)/1 var(--font-heading);
+  text-transform: uppercase;
+}
+.hud-name, .sign-year { display: none; }
+/* 3/4 size so a full range fits between neighbouring signs at tablet widths. Every sign is as wide as
+   "2020-2023" (9 characters, and Press Start 2P is monospaced) so they all match. */
+@media (min-width: 600px) { .sign-year { display: block; min-width: 9ch; text-align: center; font-size: calc(var(--fs-ui) * 0.75); } }
+@media (min-width: 700px) { .hud-name { display: inline; } }
+.sign {
+  --edge: var(--indigo);
+  position: absolute;
+  bottom: calc(var(--line) + var(--b) * 22);
+  translate: -50% 0;
+  display: grid;
+  justify-items: center;
+  gap: var(--b);
+  padding: calc(var(--b) * 2);
+  background: var(--purple-deep);
+  font: var(--fs-ui)/1 var(--font-heading);
+  cursor: pointer;
+}
+.sign svg { width: calc(var(--b) * 12); height: calc(var(--b) * 12); }
+.sign.current, .sign:hover { --edge: var(--blue-bright); }
+/* Post down to the path, behind the runner */
+.sign::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + var(--b));
+  left: 50%;
+  width: calc(var(--b) * 2);
+  height: calc(var(--b) * 21);
+  translate: -50% 0;
+  background: var(--indigo-deep);
+}
+/* 16x20 sprite at var(--b) per pixel; the sheet holds 5 frames side by side: stand, run x3, jump */
+.runner {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  bottom: var(--line);
+  width: calc(var(--b) * 16);
+  height: calc(var(--b) * 20);
+  margin-left: calc(var(--b) * -8);
+  overflow: hidden;
+  transition: left var(--run-ms) linear;
+}
+.runner-sheet { display: block; width: 500%; height: 100%; }
+.runner.left { scale: -1 1; }
+.runner.running .runner-sheet { animation: run 360ms steps(3) infinite; }
+.runner.jumping .runner-sheet { animation: none; translate: -80% 0; }
+.runner.jumping { animation: leap 480ms steps(6); }
+@keyframes run { from { translate: -20% 0; } to { translate: -80% 0; } }
+@keyframes leap { 50% { translate: 0 calc(var(--b) * -14); } }
+/* Level buttons set into the ground under each sign */
+.nodes { margin: 0; padding: 0; list-style: none; }
+.nodes li { position: absolute; bottom: calc((var(--line) - var(--node)) / 2); translate: -50% 0; }
+.node {
+  --edge: var(--indigo);
+  width: var(--node);
+  height: var(--node);
+  padding: 0;
+  border: 0;
+  background: var(--shade-dark);
+  color: var(--text);
+  font: var(--fs-ui)/1 var(--font-heading);
+  cursor: pointer;
+}
+.node.done { --edge: var(--blue-bright); color: var(--blue-bright); }
+.node[aria-current] {
+  --edge: var(--blue-bright);
+  background: var(--blue-bright);
+  color: var(--bg);
+  filter: drop-shadow(0 0 var(--px) rgb(18 162 229 / 0.6));
+}
+/* A ring just inside the edge: the ground band is too shallow on phones for the usual outside one */
+.node:focus-visible { outline-color: #e8ecff; outline-offset: calc(var(--b) * -2); }
+
+.game-dialog { display: grid; gap: calc(var(--px) * 4); margin-top: calc(var(--px) * 4); }
+@media (min-width: 900px) { .game-dialog { grid-template-columns: 1fr auto; } }
+/* Framed box: notched outer border, a dark and an indigo inner line, a rivet in each corner */
+.game-panel {
+  padding: calc(var(--px) * 4) calc(var(--px) * 5);
+  background:
+    linear-gradient(var(--indigo) 0 0) left var(--px) top var(--px) / var(--px) var(--px) no-repeat,
+    linear-gradient(var(--indigo) 0 0) right var(--px) top var(--px) / var(--px) var(--px) no-repeat,
+    linear-gradient(var(--indigo) 0 0) left var(--px) bottom var(--px) / var(--px) var(--px) no-repeat,
+    linear-gradient(var(--indigo) 0 0) right var(--px) bottom var(--px) / var(--px) var(--px) no-repeat,
+    var(--shade-dark);
+  box-shadow:
+    0 calc(var(--b) * -1) 0 0 var(--indigo),
+    0 var(--b) 0 0 var(--indigo),
+    calc(var(--b) * -1) 0 0 0 var(--indigo),
+    var(--b) 0 0 0 var(--indigo),
+    inset 0 0 0 var(--b) var(--bg),
+    inset 0 0 0 calc(var(--b) * 2) var(--indigo-deep);
+}
+.game-text { display: grid; }
+.game-text > div { grid-area: 1 / 1; visibility: hidden; }
+.game-text > .shown { visibility: visible; }
+.game-entry { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--px) * 4); font-size: 1.125rem; }
+.game-icon { width: calc(var(--b) * 16); height: calc(var(--b) * 16); }
+.game-entry .btn { margin-top: calc(var(--px) * 4); }
+.game-entry p { margin: 0; }
+/* Heading font: Pixelify Sans's digits are odd (its 5 especially) */
+.game-entry .game-kicker { margin-bottom: calc(var(--px) * 2); color: var(--blue-bright); font: max(12px, calc(var(--fs-ui) * 0.75))/1.5 var(--font-heading); }
+.game-entry h3 { margin: 0 0 calc(var(--px) * 2); font-size: var(--fs-ui); line-height: 1.5; }
+.game-pad { display: grid; justify-items: center; align-content: center; gap: calc(var(--px) * 3); }
+.pad-label { margin: 0; }
+.pad-buttons { display: flex; gap: calc(var(--px) * 3); }
+/* Arcade button (PadButton.tsx): solid blue, notched border, a bevel along the bottom, a soft glow */
+.pad-btn {
+  width: max(calc(var(--px) * 10), 40px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: var(--blue-bright);
+  cursor: pointer;
+  box-shadow:
+    0 calc(var(--b) * -1) 0 0 var(--blue-bright),
+    0 var(--b) 0 0 var(--blue-bright),
+    calc(var(--b) * -1) 0 0 0 var(--blue-bright),
+    var(--b) 0 0 0 var(--blue-bright),
+    inset 0 calc(var(--b) * -2) 0 0 var(--blue),
+    0 0 calc(var(--px) * 2) 0 rgb(18 162 229 / 0.35);
+}
+/* Arrow pixels are a heading-font pixel (an eighth of --fs-h2), so arrows match the < and > glyphs elsewhere */
+.pad-btn svg { display: block; width: calc(var(--fs-h2) / 8 * var(--cols)); margin: auto; }
+.pad-btn:active { translate: 0 var(--b); }
+.pad-btn[aria-disabled='true'] { opacity: 0.35; cursor: default; translate: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+
 .site-footer {
   padding-block: calc(var(--px) * 8);
   border-top: var(--b) solid var(--shade);
@@ -267,7 +458,7 @@ textarea.input { resize: vertical; }
 .site-footer p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .cursor { animation: none; }
+  .cursor, .runner.jumping, .star, .cloud { animation: none; }
   .btn, .level { transition: none; }
   .btn:hover, .btn:active, .level:hover { transform: none; }
 }
