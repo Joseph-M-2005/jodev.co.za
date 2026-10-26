@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite build && wrangler dev"
+    "preview": "vite build && wrangler dev",
+    "test": "vite build && node --test test/site.test.js"
   },
   "dependencies": {
     "@fontsource-variable/pixelify-sans": "^5.3.0",
