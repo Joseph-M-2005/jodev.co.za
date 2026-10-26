@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import Layout from './Layout'
+import '../styles/index.css'
+import Layout from '../components/Layout'
 
 // Shared placeholder for pages that aren't built yet; the page name comes from <div id="root" data-page>.
 const root = document.getElementById('root')!

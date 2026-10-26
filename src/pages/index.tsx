@@ -1,4 +1,9 @@
-export default function Home() {
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import '../styles/index.css'
+import Layout from '../components/Layout'
+
+function Home() {
   return (
     <section className="hero">
       <div className="container hero-grid">
@@ -20,3 +25,11 @@ export default function Home() {
     </section>
   )
 }
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Layout>
+      <Home />
+    </Layout>
+  </StrictMode>,
+)
