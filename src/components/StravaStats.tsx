@@ -45,7 +45,7 @@ export default function StravaStats({ goal }: { goal: string }) {
                 <p className="stat">{value(effort && time(effort.seconds))}</p>
                 {effort ? (
                   <p className="stat-note">
-                    {day(effort.date)} <a className="strava-link" href={`https://www.strava.com/activities/${effort.activityId}`}>View on Strava</a>
+                    <span className="stat-date">{day(effort.date)}</span> <a className="strava-link" href={`https://www.strava.com/activities/${effort.activityId}`}>View on Strava</a>
                   </p>
                 ) : (
                   data && <p className="stat-note">Not yet</p>

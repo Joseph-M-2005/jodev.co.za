@@ -282,6 +282,10 @@ textarea.input { resize: vertical; }
 .stat { font: var(--fs-ui)/1.4 var(--font-heading); }
 @media (min-width: 600px) { .stat { font-size: calc(var(--fs-ui) * 1.25); } }
 .stat-note { font-size: 1rem; }
+/* Dates in the heading font too: Pixelify's digits are hard to read (its 5 especially) */
+.stat-date { font: max(12px, calc(var(--fs-ui) * 0.75))/1.6 var(--font-heading); white-space: nowrap; }
+/* A little less side padding than other cards so "14 Mar 2026" fits on one line in two columns on phones */
+.strava .card { padding-inline: calc(var(--px) * 4); }
 /* Strava's rule for links back to their data: the words "View on Strava", bold or underlined. On its own line under the date. */
 .strava-link { display: block; width: fit-content; font-weight: 700; }
 .strava-logo { display: inline-block; margin-top: calc(var(--px) * 6); }

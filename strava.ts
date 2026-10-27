@@ -234,6 +234,8 @@ const json = (body: object, status = 200, headers: HeadersInit = {}) => Response
 const notFound = () => json({ error: 'Not found' }, 404)
 // Cloudflare's edge cache for this data centre (Workers only), so page views hardly ever touch D1
 const edge = () => (caches as unknown as { default: Cache }).default
+// One entry for jodev.co.za and www.jodev.co.za, so one purge clears both
+const cacheKey = (url: URL) => new Request(`${url.origin.replace('://www.', '://')}/api/strava`)
 
 // Everything under /api/strava
 export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promise<Response> {
@@ -242,7 +244,7 @@ export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promis
 
   if (path === '/api/strava') {
     if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405)
-    const key = new Request(url.origin + path)
+    const key = cacheKey(url)
     const hit = await edge().match(key)
     if (hit) return hit
     const res = json(await publicData(env.DB), 200, { 'Cache-Control': 'public, max-age=300' })
@@ -277,7 +279,8 @@ export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promis
     }
     const event = checkEvent(body, cfg.athleteId, subscriptionId)
     // Strava wants a 200 within 2 seconds, so the work carries on after the response. Ignored events get the same 200.
-    if (event) ctx.waitUntil(handleEvent(env.DB, cfg, event))
+    // The purge only reaches the data centre Strava's request landed in; elsewhere the old copy lasts up to 5 minutes.
+    if (event) ctx.waitUntil(handleEvent(env.DB, cfg, event).then(() => edge().delete(cacheKey(url))))
     return json({ ok: true })
   }
 
@@ -304,6 +307,8 @@ export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promis
       console.error('Strava sync failed', (err as Error).message)
       return json({ error: (err as Error).message }, 502)
     }
+    // So the new numbers show straight away (in this data centre, which serves the visitors near you)
+    await edge().delete(cacheKey(url))
     return json(await publicData(env.DB))
   }
 
