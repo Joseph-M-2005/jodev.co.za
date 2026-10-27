@@ -1,6 +1,7 @@
 import { WorkerMailer } from 'worker-mailer'
+import { strava, stravaDaily, type Ctx, type StravaEnv } from './strava'
 
-interface Env {
+interface Env extends StravaEnv {
   ASSETS: { fetch: typeof fetch }
   CONTACT_LIMIT: { limit(options: { key: string }): Promise<{ success: boolean }> }
   SMTP_PASSWORD: string
@@ -67,13 +68,14 @@ function renderCard(svg: string): string {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
     const { pathname } = new URL(request.url)
     if (pathname === '/' && TERMINAL.test(request.headers.get('user-agent') ?? '')) {
       card ??= renderCard(await env.ASSETS.fetch(new URL('/favicon.svg', request.url)).then((res) => res.text()))
       // no-store and Vary so no cache ever hands the card to a browser or the HTML to curl
       return new Response(card, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', Vary: 'User-Agent' } })
     }
+    if (pathname === '/api/strava' || pathname.startsWith('/api/strava/')) return strava(request, env, ctx)
     if (pathname !== '/api/contact') return env.ASSETS.fetch(request)
     if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
@@ -125,5 +127,10 @@ export default {
       return json({ error: `Couldn't send right now. Email ${ME} directly.` }, 502)
     }
     return json({ ok: true })
+  },
+
+  // Daily cron (wrangler.jsonc triggers)
+  async scheduled(_controller: unknown, env: Env, ctx: Ctx): Promise<void> {
+    ctx.waitUntil(stravaDaily(env))
   },
 }

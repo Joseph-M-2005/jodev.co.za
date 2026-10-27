@@ -51,6 +51,22 @@ test('/api/contact rejects a message without a name', async () => {
   assert.match((await res.json()).error, /name/)
 })
 
+test('/api/strava serves the public Strava data', async () => {
+  const res = await get('/api/strava')
+  assert.equal(res.status, 200)
+  const data = await res.json()
+  assert.ok(Array.isArray(data.bestEfforts))
+  assert.ok('ytd' in data)
+})
+
+// Unset secrets (CI, the local harness) answer 404, the live site 401: either way nothing gets through
+test('Strava webhook and admin sync refuse strangers', async () => {
+  assert.equal((await get('/api/strava/webhook/not-the-secret', { method: 'POST', body: '{}' })).status, 404)
+  assert.equal((await get('/api/strava/webhook/not-the-secret?hub.mode=subscribe&hub.challenge=x')).status, 404)
+  const admin = await get('/api/strava/admin/sync', { method: 'POST', body: '{"activityIds":[1]}' })
+  assert.ok([401, 404].includes(admin.status), `admin sync answered ${admin.status}`)
+})
+
 // curl defaults to http and doesn't follow redirects, so an http -> https redirect for everyone breaks the card
 test('plain http curl gets the card, not a redirect', { skip: !live }, async () => {
   const res = await fetch(new URL('/', live.replace(/^https:/, 'http:')), { ...CURL, redirect: 'manual' })
