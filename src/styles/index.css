@@ -275,8 +275,17 @@ textarea.input { resize: vertical; }
 .photo-wide { aspect-ratio: 3 / 2; }
 .split > .photo { max-width: 28rem; justify-self: center; }
 .note { margin: calc(var(--px) * 6) 0 0; font-size: 1.125rem; }
-.stats { grid-template-columns: 1fr 1fr; }
-.stat { font-size: 2rem; line-height: 1.2; }
+/* Strava Best Efforts and this year's totals (StravaStats.tsx). Numbers in Press Start 2P: Pixelify's digits are odd. */
+.strava-title { margin: calc(var(--px) * 12) 0 calc(var(--px) * 6); font-size: var(--fs-ui); }
+.strava-grid { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.strava .num { line-height: 1.4; }
+.stat { font: var(--fs-ui)/1.4 var(--font-heading); }
+@media (min-width: 600px) { .stat { font-size: calc(var(--fs-ui) * 1.25); } }
+.stat-note { font-size: 1rem; }
+/* Strava's rule for links back to their data: the words "View on Strava", bold or underlined. On its own line under the date. */
+.strava-link { display: block; width: fit-content; font-weight: 700; }
+.strava-logo { display: inline-block; margin-top: calc(var(--px) * 6); }
+.strava-logo img { display: block; image-rendering: auto; }
 .jumps-title { margin: calc(var(--px) * 12) 0 calc(var(--px) * 2); font-size: var(--fs-ui); }
 .jumps {
   display: grid;

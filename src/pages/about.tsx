@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import '../styles/index.css'
 import Layout from '../components/Layout'
 import PathGame, { type Level } from '../components/PathGame'
+import StravaStats from '../components/StravaStats'
 import intro from '../assets/about/intro.webp'
 import startline from '../assets/about/startline.webp'
 import action from '../assets/about/action.webp'
@@ -43,13 +44,8 @@ const path: Level[] = [
   },
 ]
 
-// Placeholders: these will come from the Strava API
-const stats = [
-  { label: '5K PB', value: '--:--' },
-  { label: 'Half PB', value: '--:--' },
-  { label: 'Per week', value: '-- km' },
-  { label: 'Next goal', value: '???' },
-]
+// The one running stat not from Strava
+const NEXT_GOAL = '???'
 
 const jumps = [
   { src: action, alt: 'Joseph running on the track at the Bestmed Madibaz race', caption: 'Bestmed Madibaz, on the track' },
@@ -96,19 +92,11 @@ function About() {
             <div>
               <p className="lead">I'm also into endurance running. The longer the run, the better.</p>
               <p>Fun fact: I ran the NMB Half Marathon in a giant inflatable frog suit.</p>
-              <ul className="grid stats">
-                {stats.map((stat) => (
-                  <li key={stat.label}>
-                    <div className="card panel">
-                      <span className="num">{stat.label}</span>
-                      <p className="stat">{stat.value}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </div>
             <img className="photo photo-wide" src={startline} alt="Joseph on a dark start line at the Knysna Forest Marathon" loading="lazy" />
           </div>
+
+          <StravaStats goal={NEXT_GOAL} />
 
           <h3 className="jumps-title">Jump shots</h3>
           <p className="kicker">Press space to jump</p>
