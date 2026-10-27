@@ -74,6 +74,7 @@ sequenceDiagram
   W->>DB: for each of 5K, 10K, half, marathon: save only if faster
   W->>S: GET /athletes/me/stats
   W->>DB: save this year's totals
+  W->>W: clear the cached /api/strava copy
 ```
 
 Strava's best efforts are matched by distance (5000 m, 10000 m, 21097.5 m, 42195 m), not by label, and
@@ -101,7 +102,8 @@ curl -X POST https://jodev.co.za/api/strava/admin/sync \
 ```
 
 The endpoint takes activity IDs only. It fetches them from Strava and runs them through the same "only if
-faster" rule as webhooks. It never accepts times or other data.
+faster" rule as webhooks. It never accepts times or other data. It then clears the cached copy of
+`/api/strava`, so the new numbers show straight away.
 
 ### Every day at 03:00 UTC
 
@@ -197,7 +199,7 @@ npx wrangler d1 execute jodev --remote --command "DELETE FROM strava_best_effort
 - **API usage:** each new run costs 2 to 3 Strava requests (a token refresh at most every 6 hours, the run, the totals). Strava's default limit is 100 reads per 15 minutes and 1,000 per day.
 - **Deleted or cropped PB runs aren't recalculated.** No history is kept, so the next-best time isn't known. Fix it by hand as above.
 - **The yearly totals only count runs visible to Everyone.** That's Strava's rule for the stats endpoint, so followers-only runs aren't counted.
-- **Updates can take up to 5 minutes** to appear, because of the edge cache.
+- **Updates can take up to 5 minutes to appear in some places.** Syncs clear the cached copy, but Cloudflare's cache is per data centre. A seed clears it in the data centre near me (and so near most visitors). A webhook clears it wherever Strava's request lands. Everywhere else the old copy expires within 5 minutes.
 - **Missed webhooks:** if Strava gives up delivering an event (it tries 3 times), that run isn't checked unless it's edited later. A future improvement: have the daily job check the last couple of days of activities.
 
 ## Tests

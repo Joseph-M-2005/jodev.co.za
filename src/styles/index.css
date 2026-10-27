@@ -176,7 +176,9 @@ main { flex: 1; display: flex; flex-direction: column; }
 .lead { max-width: 36ch; margin: 0 0 2rem; font-size: 1.25rem; }
 .actions { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 4); }
 
-.section { padding-block: calc(var(--px) * 12); }
+.section { padding-block: calc(var(--px) * 8); }
+/* Stacked sections (About) share one gap */
+.section + .section { padding-top: 0; }
 .section h2 { margin: 0 0 calc(var(--px) * 6); font-size: var(--fs-h2); }
 
 .grid {
@@ -272,21 +274,48 @@ textarea.input { resize: vertical; }
   background: var(--shade-dark);
   image-rendering: auto;
 }
-.photo-wide { aspect-ratio: 3 / 2; }
-.split > .photo { max-width: 28rem; justify-self: center; }
+.split > .photo { justify-self: end; }
+/* Start line photo: 2:1 on phones to save height (the face is at the top), smaller beside the text from 900px */
+.photo-wide { aspect-ratio: 2 / 1; object-position: 50% 0; }
+@media (min-width: 900px) { .photo-wide { max-width: calc(var(--px) * 44); aspect-ratio: 3 / 2; } }
+/* About intro: on phones a small face crop beside the heading; from 900px the photo gets its own column */
+.intro {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'head photo' 'body body';
+  gap: calc(var(--px) * 4) calc(var(--px) * 6);
+  align-items: center;
+}
+.intro-head { grid-area: head; }
+.intro-photo { grid-area: photo; }
+.intro-body { grid-area: body; }
+.intro-photo .photo { width: 6rem; aspect-ratio: 1; }
+@media (min-width: 900px) {
+  .intro { grid-template-areas: 'head photo' 'body photo'; grid-template-rows: auto 1fr; column-gap: calc(var(--px) * 8); }
+  .intro-body { align-self: start; }
+  .intro-photo .photo { width: calc(var(--px) * 36); aspect-ratio: 4 / 5; }
+}
 .note { margin: calc(var(--px) * 6) 0 0; font-size: 1.125rem; }
 /* Strava Best Efforts and this year's totals (StravaStats.tsx). Numbers in Press Start 2P: Pixelify's digits are odd. */
-.strava-title { margin: calc(var(--px) * 12) 0 calc(var(--px) * 6); font-size: var(--fs-ui); }
-.strava-grid { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.strava-title { margin: calc(var(--px) * 8) 0 calc(var(--px) * 4); font-size: var(--fs-ui); }
+.strava-grid { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: calc(var(--px) * 3); }
 .strava .num { line-height: 1.4; }
 .stat { font: var(--fs-ui)/1.4 var(--font-heading); }
 @media (min-width: 600px) { .stat { font-size: calc(var(--fs-ui) * 1.25); } }
 .stat-note { font-size: 1rem; }
+/* Dates in the heading font too: Pixelify's digits are hard to read (its 5 especially) */
+.stat-date { font: max(12px, calc(var(--fs-ui) * 0.75))/1.6 var(--font-heading); white-space: nowrap; }
+/* A little less side padding than other cards so "14 Mar 2026" fits on one line in two columns on phones */
+.strava .card { gap: calc(var(--px) * 2); padding: calc(var(--px) * 3) calc(var(--px) * 4); }
+/* This year's totals in one panel: 2x2 on phones, a row from 600px */
+.ytd { display: grid; grid-template-columns: repeat(2, 1fr); gap: calc(var(--px) * 4); margin: 0; padding: calc(var(--px) * 4); }
+@media (min-width: 600px) { .ytd { grid-template-columns: repeat(4, 1fr); } }
+.ytd dd { margin: calc(var(--px) * 2) 0 0; }
 /* Strava's rule for links back to their data: the words "View on Strava", bold or underlined. On its own line under the date. */
 .strava-link { display: block; width: fit-content; font-weight: 700; }
 .strava-logo { display: inline-block; margin-top: calc(var(--px) * 6); }
 .strava-logo img { display: block; image-rendering: auto; }
-.jumps-title { margin: calc(var(--px) * 12) 0 calc(var(--px) * 2); font-size: var(--fs-ui); }
+.jumps-title { margin: calc(var(--px) * 8) 0 calc(var(--px) * 2); font-size: var(--fs-ui); }
 .jumps {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 16rem));
@@ -403,6 +432,17 @@ textarea.input { resize: vertical; }
 }
 /* A ring just inside the edge: the ground band is too shallow on phones for the usual outside one */
 .node:focus-visible { outline-color: #e8ecff; outline-offset: calc(var(--b) * -2); }
+
+/* Level select down the right edge (SectionRail.tsx), made of the game's level buttons. Small squares in the
+   page gutter until there's room beside the content for numbered ones. */
+.rail { position: fixed; top: 50%; right: var(--b); z-index: 1; translate: 0 -50%; }
+.rail ol { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.rail .node { --node: 10px; display: grid; place-content: center; font-size: 0; text-decoration: none; }
+@media (min-width: 1300px) {
+  .rail { right: calc(var(--px) * 2); }
+  .rail ol { gap: calc(var(--px) * 2); }
+  .rail .node { --node: max(calc(var(--b) * 9), 28px); font-size: var(--fs-ui); }
+}
 
 .game-dialog { display: grid; gap: calc(var(--px) * 4); margin-top: calc(var(--px) * 4); }
 @media (min-width: 900px) { .game-dialog { grid-template-columns: 1fr auto; } }
