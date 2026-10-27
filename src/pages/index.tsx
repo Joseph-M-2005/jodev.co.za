@@ -16,7 +16,7 @@ function Home() {
             and I love automating the boring parts.
           </p>
           <div className="actions">
-            <a className="btn" href="/work">See my work</a>
+            <a className="btn" href="/about">About me</a>
             <a className="btn btn-secondary" href="/contact">Contact me</a>
           </div>
         </div>

@@ -57,13 +57,13 @@ export default function StravaStats({ goal }: { goal: string }) {
       </ul>
 
       <h3 className="strava-title">This year</h3>
-      <ul className="grid strava-grid">
-        {/* Whole numbers so each value fits on one line in the card */}
-        <li><div className="card panel"><span className="num">Distance</span><p className="stat">{value(ytd && `${Math.round(ytd.metres / 1000)} km`)}</p></div></li>
-        <li><div className="card panel"><span className="num">Runs</span><p className="stat">{value(ytd && String(ytd.runs))}</p></div></li>
-        <li><div className="card panel"><span className="num">Time</span><p className="stat">{value(ytd && `${Math.round(ytd.seconds / 3600)} h`)}</p></div></li>
-        <li><div className="card panel"><span className="num">Next goal</span><p className="stat">{goal}</p></div></li>
-      </ul>
+      {/* One panel rather than four cards, to save space. Whole numbers so each value fits on one line. */}
+      <dl className="panel ytd">
+        <div><dt className="num">Distance</dt><dd className="stat">{value(ytd && `${Math.round(ytd.metres / 1000)} km`)}</dd></div>
+        <div><dt className="num">Runs</dt><dd className="stat">{value(ytd && String(ytd.runs))}</dd></div>
+        <div><dt className="num">Time</dt><dd className="stat">{value(ytd && `${Math.round(ytd.seconds / 3600)} h`)}</dd></div>
+        <div><dt className="num">Next goal</dt><dd className="stat">{goal}</dd></div>
+      </dl>
 
       {/* Strava's brand guidelines: their logo, unmodified, wherever their data is shown */}
       <a className="strava-logo" href="https://www.strava.com"><img src="/powered-by-strava.svg" alt="Powered by Strava" width="183" height="19" /></a>
