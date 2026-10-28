@@ -1,12 +1,19 @@
 // Runs the real Worker and built assets locally (`npm test`), or checks the live site when SITE_URL is set
-// (the Deploy workflow does that after deploying)
+// (the Deploy workflows do that after deploying, and the blue-green one checks green's Version URL first)
 import { after, before, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createTestHarness } from 'wrangler'
 
 const live = process.env.SITE_URL
+// A workers.dev Version URL (blue-green's green) has no www and no plain http, and sits behind Cloudflare Access
+const domain = live && !new URL(live).hostname.endsWith('.workers.dev')
+// Access service token for green (repo secrets in the blue-green workflow)
+const access = process.env.CF_ACCESS_CLIENT_ID
+  ? { 'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID, 'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET ?? '' }
+  : {}
 const server = live ? undefined : createTestHarness({ workers: [{ configPath: './wrangler.jsonc' }] })
-const get = (path, init) => (server ? server.fetch(path, init) : fetch(new URL(path, live), init))
+const get = (path, init = {}) =>
+  server ? server.fetch(path, init) : fetch(new URL(path, live), { ...init, headers: { ...init.headers, ...access } })
 before(() => server?.listen())
 after(() => server?.close())
 
@@ -68,14 +75,21 @@ test('Strava webhook and admin sync refuse strangers', async () => {
 })
 
 // curl defaults to http and doesn't follow redirects, so an http -> https redirect for everyone breaks the card
-test('plain http curl gets the card, not a redirect', { skip: !live }, async () => {
+test('plain http curl gets the card, not a redirect', { skip: !domain }, async () => {
   const res = await fetch(new URL('/', live.replace(/^https:/, 'http:')), { ...CURL, redirect: 'manual' })
   assert.equal(res.status, 200)
   assert.match(res.headers.get('content-type'), /^text\/plain/)
 })
 
-test('www serves the site too', { skip: !live }, async () => {
+test('www serves the site too', { skip: !domain }, async () => {
   const url = new URL('/', live)
   url.hostname = `www.${url.hostname}`
   assert.equal((await fetch(url, BROWSER)).status, 200)
+})
+
+// Old versions keep their Version URLs (with the production secrets and database), so they must never be public.
+// Without the service token, Access answers instead of the Worker: a login redirect or a refusal.
+test('Version URLs are behind Cloudflare Access', { skip: !live || domain }, async () => {
+  const res = await fetch(new URL('/', live), { ...BROWSER, redirect: 'manual' })
+  assert.ok([302, 401, 403].includes(res.status), `answered ${res.status} without the Access token`)
 })

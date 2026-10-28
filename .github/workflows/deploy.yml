@@ -14,7 +14,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      # No dependency install scripts: nothing from npm runs code before wrangler gets the token. Only esbuild and
+      # workerd have one, a check of the native binary that npm installs as an optional dependency anyway.
+      - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test
       - run: npx wrangler deploy
