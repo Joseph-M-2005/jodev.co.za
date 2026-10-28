@@ -235,7 +235,7 @@ main { flex: 1; display: flex; flex-direction: column; }
   .btn-raised:hover:not(:active) { translate: -2px -2px; box-shadow: 6px 6px 0 var(--purple-deep); }
 }
 .back { margin-bottom: calc(var(--px) * 6); }
-.contact h1, .about h1 { margin: 0 0 1rem; font-size: var(--fs-h1); line-height: 1.4; }
+.contact h1, .about h1, .work h1 { margin: 0 0 1rem; font-size: var(--fs-h1); line-height: 1.4; }
 .contact-grid { display: grid; gap: calc(var(--px) * 8); align-items: start; }
 @media (min-width: 900px) { .contact-grid { grid-template-columns: 2fr 1fr; } }
 .contact .panel { display: grid; gap: calc(var(--px) * 4); padding: calc(var(--px) * 5); font-size: 1.125rem; }
@@ -332,6 +332,74 @@ textarea.input { resize: vertical; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .jumps li:hover .photo { animation: hop 400ms steps(4); }
 }
+
+/* Work page (work.tsx) */
+/* Projects (Project in work.tsx): each one closed to its name and tagline until clicked, then its sections
+   (Section) open one by one */
+.projects { margin-top: calc(var(--px) * 10); border-bottom: var(--b) solid var(--shade); }
+.project { border-top: var(--b) solid var(--shade); }
+.project > summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: calc(var(--px) * 4);
+  align-items: center;
+  padding-block: calc(var(--px) * 6);
+  cursor: pointer;
+  list-style: none;
+}
+.project > summary > * { grid-column: 2; }
+.project > summary .kicker { margin-bottom: calc(var(--px) * 2); }
+.project > summary h2 { margin: 0 0 calc(var(--px) * 2); }
+.project > summary:hover h2 { color: var(--blue-bright); }
+.project-tagline { max-width: 40ch; font-size: 1.25rem; }
+.project-body { padding-bottom: calc(var(--px) * 8); }
+.project-body > p, .project-section-body > p { max-width: 65ch; font-size: 1.125rem; }
+.project-body > p:first-child { margin-top: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: calc(var(--px) * 2); margin: calc(var(--px) * 5) 0; padding: 0; list-style: none; }
+.tags li { padding: var(--b) var(--px); font-size: 1rem; }
+.project-sections { margin-top: calc(var(--px) * 8); }
+.project-section { border-top: var(--b) solid var(--shade); }
+.project-section summary { display: flex; align-items: center; gap: calc(var(--px) * 3); padding-block: calc(var(--px) * 4); cursor: pointer; list-style: none; }
+.project summary::-webkit-details-marker { display: none; }
+/* The same ">" as the step diagrams, turned to point down while open: big beside a project, small beside a section */
+.project > summary::before, .project-section summary::before { content: '>' / ''; color: var(--blue-bright); font: var(--fs-ui)/1 var(--font-heading); }
+.project > summary::before { grid-column: 1; grid-row: 1 / span 3; font-size: var(--fs-h2); }
+.project[open] > summary::before, .project-section[open] > summary::before { rotate: 90deg; }
+.project-section h3 { margin: 0; font-size: var(--fs-ui); line-height: 1.5; }
+.project-section summary:hover h3 { color: var(--blue-bright); }
+.project-section-body { padding-bottom: calc(var(--px) * 8); }
+.highlights { grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.highlights h4 { margin: 0; font: var(--fs-ui)/1.5 var(--font-heading); }
+/* Step diagrams (Flow in work.tsx): panels joined by the heading font's ">", turned to point down while they're
+   stacked, until there's room for five in a row */
+.flow { margin: 0 0 calc(var(--px) * 8); }
+.flow-label { margin-bottom: calc(var(--px) * 3); color: var(--blue-bright); font: max(12px, calc(var(--fs-ui) * 0.75))/1.5 var(--font-heading); }
+.flow ol { display: grid; gap: calc(var(--px) * 6); max-width: 36rem; margin: 0; padding: 0; list-style: none; }
+.flow li { position: relative; display: grid; align-content: start; gap: var(--px); padding: calc(var(--px) * 3); }
+.flow strong, .lanes strong { font: max(12px, calc(var(--fs-ui) * 0.75))/1.5 var(--font-heading); }
+.flow p, .lanes p { margin: 0; }
+.flow li + li::before {
+  content: '>' / '';
+  position: absolute;
+  top: calc(var(--px) * -3);
+  left: 50%;
+  translate: -50% -50%;
+  rotate: 90deg;
+  color: var(--blue-bright);
+  font: var(--fs-ui)/1 var(--font-heading);
+}
+@media (min-width: 1100px) {
+  .flow ol { grid-auto-flow: column; grid-auto-columns: 1fr; max-width: none; }
+  .flow li + li::before { top: 50%; left: calc(var(--px) * -3); rotate: none; }
+}
+/* Blue-green before and after: a full bar for the version with the visitors, an empty track for the other */
+.lanes { display: grid; gap: calc(var(--px) * 6); margin: calc(var(--px) * 6) 0 calc(var(--px) * 8); }
+@media (min-width: 700px) { .lanes { grid-template-columns: 1fr 1fr; } }
+.lanes figure { margin: 0; padding: calc(var(--px) * 4); }
+.lanes ul { display: grid; gap: calc(var(--px) * 4); margin: 0; padding: 0; list-style: none; }
+.bar { display: block; height: calc(var(--px) * 2); margin-block: var(--px); background: var(--shade); }
+.bar.live { background: var(--blue-bright); }
+.lane-share { font-size: 1rem; }
 
 /* "The path so far": every level on one screen along a path, the runner runs between them.
    The scene is 72 scene pixels tall at var(--b) each, so its art lines up with the runner's pixels. */
