@@ -1,5 +1,5 @@
 // Runs the real Worker and built assets locally (`npm test`), or checks the live site when SITE_URL is set
-// (the Deploy workflows do that after deploying, and the blue-green one checks green's Version URL first)
+// (the Deploy workflow checks green's Version URL before the switch and the live site after)
 import { after, before, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createTestHarness } from 'wrangler'

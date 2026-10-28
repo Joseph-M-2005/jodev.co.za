@@ -12,6 +12,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      # Same install as Deploy, so a dependency that needs its install script fails here first
+      - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test

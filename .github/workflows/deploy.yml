@@ -1,13 +1,27 @@
 name: Deploy
 
+# Blue-green. Blue is the version serving the site now, green the new one: green is uploaded with no traffic,
+# tested on its own workers.dev Version URL (behind Cloudflare Access), then switched in. If the live check fails
+# after the switch, traffic goes straight back to blue.
 on:
   workflow_dispatch:
+    inputs:
+      rehearse_rollback:
+        description: "Rollback fire drill: fail the live check on purpose so traffic goes back to blue (run again without it to ship)"
+        type: boolean
+        default: false
 
+# One deploy at a time
 concurrency: deploy
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        # pipefail, so a failed wrangler call isn't hidden by the jq after it
+        shell: bash
+    # The Cloudflare token goes only to the wrangler steps, never to npm ci or the tests
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -19,12 +33,57 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm test
-      - run: npx wrangler deploy
+      # Routes, the cron and preview_urls from wrangler.jsonc: `versions upload` doesn't apply them
+      - run: npx wrangler triggers deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # Same tests against the live site; the short wait lets the new version reach every Cloudflare location
+      - name: Note blue (the version live now)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          blue=$(npx wrangler deployments status --json | jq -r '[.versions[] | select(.percentage == 100) | .version_id][0] // error("no version has 100% of traffic")')
+          echo "BLUE=$blue" >> "$GITHUB_ENV"
+      - name: Upload green (no traffic yet)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler.ndjson
+        run: |
+          npx wrangler versions upload --preview-alias green --message "$GITHUB_SHA"
+          jq -r 'select(.type == "version-upload") | "GREEN=\(.version_id)", "GREEN_URL=\(.preview_url // error("no Version URL, are preview_urls on?"))"' "$WRANGLER_OUTPUT_FILE_PATH" >> "$GITHUB_ENV"
+      # Version URLs sit behind Cloudflare Access; the service token gets the tests through, and one test checks
+      # that a request without it is refused
+      - name: Test green on its Version URL
+        run: node --test test/site.test.js
+        env:
+          SITE_URL: ${{ env.GREEN_URL }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      - name: Switch traffic to green
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler versions deploy "$GREEN@100%" -y --message "Deploy $GITHUB_SHA"
+          echo "SWITCHED=1" >> "$GITHUB_ENV"
+      # The short wait lets green reach every Cloudflare location
       - name: Check the live site
-        run: sleep 15 && node --test test/site.test.js
         env:
           SITE_URL: https://jodev.co.za
+          REHEARSE: ${{ inputs.rehearse_rollback }}
+        run: |
+          sleep 15 && node --test test/site.test.js
+          if [ "$REHEARSE" = true ]; then echo "::warning::Rollback fire drill: failing the live check on purpose"; exit 1; fi
+      - name: Roll back to blue
+        if: failure() && env.SWITCHED == '1'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler rollback "$BLUE" -y --message "Live check failed for $GITHUB_SHA, back to blue"
+      - name: Check the live site on blue
+        if: failure() && env.SWITCHED == '1'
+        env:
+          SITE_URL: https://jodev.co.za
+        run: sleep 15 && node --test test/site.test.js
