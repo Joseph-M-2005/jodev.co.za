@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import ExternalLink from './ExternalLink'
 
 const nav = [
   { href: '/work', label: 'Work' },
@@ -30,7 +31,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <footer className="site-footer">
         <div className="container">
           <p>© {new Date().getFullYear()} Joseph Mitchell</p>
-          <a href="https://github.com/Joseph-M-2005">GitHub</a>
+          <ExternalLink href="https://github.com/Joseph-M-2005">GitHub</ExternalLink>
         </div>
       </footer>
     </>
