@@ -115,8 +115,7 @@ function About() {
 
           <StravaStats goal={NEXT_GOAL} />
 
-          <h3 className="jumps-title">Jump shots</h3>
-          <p className="kicker">Press space to jump</p>
+          <h3 className="jumps-title">Action Shots</h3>
           <ul className="jumps">
             {jumps.map((jump) => (
               <li key={jump.caption}>
