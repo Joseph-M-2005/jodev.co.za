@@ -17,6 +17,9 @@
   "d1_databases": [{ "binding": "DB", "database_name": "jodev" }],
   // Daily at 03:00 UTC: Strava stats refresh and retries
   "triggers": { "crons": ["0 3 * * *"] },
+  // Every uploaded version gets its own public workers.dev Version URL; the blue-green workflow tests green there.
+  // The plain jodev.<subdomain>.workers.dev hostname stays off (workers_dev defaults to false when there are routes).
+  "preview_urls": true,
   "routes": [
     { "pattern": "jodev.co.za", "custom_domain": true },
     { "pattern": "www.jodev.co.za", "custom_domain": true }
