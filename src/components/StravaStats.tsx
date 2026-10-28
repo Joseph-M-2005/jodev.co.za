@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ExternalLink from './ExternalLink'
 
 // Shape of GET /api/strava (strava.ts publicData)
 type Effort = { name: string; seconds: number; date: string; activityId: number }
@@ -45,7 +46,7 @@ export default function StravaStats({ goal }: { goal: string }) {
                 <p className="stat">{value(effort && time(effort.seconds))}</p>
                 {effort ? (
                   <p className="stat-note">
-                    <span className="stat-date">{day(effort.date)}</span> <a className="strava-link" href={`https://www.strava.com/activities/${effort.activityId}`}>View on Strava</a>
+                    <span className="stat-date">{day(effort.date)}</span> <ExternalLink className="strava-link" href={`https://www.strava.com/activities/${effort.activityId}`}>View on Strava</ExternalLink>
                   </p>
                 ) : (
                   data && <p className="stat-note">Not yet</p>
@@ -66,7 +67,7 @@ export default function StravaStats({ goal }: { goal: string }) {
       </dl>
 
       {/* Strava's brand guidelines: their logo, unmodified, wherever their data is shown */}
-      <a className="strava-logo" href="https://www.strava.com"><img src="/powered-by-strava.svg" alt="Powered by Strava" width="183" height="19" /></a>
+      <ExternalLink className="strava-logo" href="https://www.strava.com"><img src="/powered-by-strava.svg" alt="Powered by Strava" width="183" height="19" /></ExternalLink>
     </div>
   )
 }

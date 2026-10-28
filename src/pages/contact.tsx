@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import '../styles/index.css'
 import Layout from '../components/Layout'
+import ExternalLink from '../components/ExternalLink'
 
 declare global {
   interface Window {
@@ -122,8 +123,8 @@ function Contact() {
             <p>Rather use your own mail app? Write to me directly.</p>
             <ul className="direct-list">
               <li><a href={`mailto:${EMAIL}`}>{EMAIL}</a></li>
-              <li><a href="https://www.linkedin.com/in/joseph-mitchell-2005-profile/">LinkedIn</a></li>
-              <li><a href="https://github.com/Joseph-M-2005">GitHub</a></li>
+              <li><ExternalLink href="https://www.linkedin.com/in/joseph-mitchell-2005-profile/">LinkedIn</ExternalLink></li>
+              <li><ExternalLink href="https://github.com/Joseph-M-2005">GitHub</ExternalLink></li>
               <li>Gqeberha, South Africa</li>
             </ul>
           </aside>
