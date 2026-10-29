@@ -71,7 +71,7 @@ function Contact() {
       <div className="container">
         <a className="btn-raised back" href="/"><span aria-hidden="true">&lt; </span>Back</a>
         <h1>Contact</h1>
-        <p className="lead">Got a project, a job or a question? Send me a message and I'll get back to you.</p>
+        <p className="lead">Got a question? Send me a message and I'll get back to you.</p>
 
         <div className="contact-grid">
           <form className="panel" onSubmit={onSubmit}>

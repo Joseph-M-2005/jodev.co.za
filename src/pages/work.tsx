@@ -173,20 +173,19 @@ function Work() {
                   ))}
                 </ul>
               </Section>
-  
               <Section title="Blue-green deploys">
                 <p>
-                  A normal deploy swaps the live site for the new version and checks it afterwards. With blue-green, the
+                  A blue-green deploy is a cool way to ship a new version of a site with no downtime and a quick rollback if something goes wrong.
+                  Normal deploys swap the live site for the new version and checks it afterwards. With blue-green, the
                   new version (green) goes up next to the live one (blue) with no visitors at all. Green is tested on the
                   real platform first, then all traffic switches over in one step. Blue stays ready, so going back takes
                   one command, and the pipeline does it on its own if the live check fails.
                 </p>
                 <p>
-                  Cloudflare Workers makes this possible by splitting a release in two: uploading a version, and deploying
+                  Using Cloudflare Workers makes this possible by splitting a release in two: uploading a version, and deploying
                   it, which decides who gets the traffic. Every version also gets its own test address. I keep those
-                  behind Cloudflare Access, so older versions are never public. It's more than a small site strictly
-                  needs, but it's how every release of this site goes out, the rollback has been rehearsed, and it's the
-                  same pattern teams use to ship bigger apps safely.
+                  behind Cloudflare Access. It's more than a small site needs, but it's how every release of this site goes out.
+                  The rollback has been rehearsed, and this is the same sequence used to ship bigger apps safely.
                 </p>
                 <div className="lanes">
                   {lanes.map((l) => (
