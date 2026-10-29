@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       rehearse_rollback:
-        description: "Rollback fire drill: fail the live check on purpose so traffic goes back to blue (run again without it to ship)"
+        description: "Rollback fire drill"
         type: boolean
         default: false
 
