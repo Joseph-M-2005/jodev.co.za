@@ -1,6 +1,7 @@
 # Local docs / plans / Claude rules
 Docs/
 CLAUDE.md
+.claude/
 
 # Dependencies & build
 node_modules/
