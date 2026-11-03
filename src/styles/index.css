@@ -315,6 +315,17 @@ textarea.input { resize: vertical; }
 .strava-link { display: block; width: fit-content; font-weight: 700; }
 .strava-logo { display: inline-block; margin-top: calc(var(--px) * 6); }
 .strava-logo img { display: block; image-rendering: auto; }
+/* Home page cards under the hero */
+.home-cards { padding-top: 0; }
+.home-cards h2 { margin: 0; font-size: var(--fs-ui); line-height: 1.5; }
+.home-cards .num { font-size: max(12px, calc(var(--fs-ui) * 0.75)); line-height: 1.4; }
+.home-cards .stat { font-size: var(--fs-ui); }
+.home-cards .strava-logo { margin-top: 0; }
+/* Link at the bottom of the card, so the three line up when their text is different lengths */
+.card-link { align-self: end; width: fit-content; font-weight: 700; }
+.home-cards .card { grid-template-rows: auto auto 1fr auto; }
+.card-body { display: grid; align-content: start; gap: calc(var(--px) * 3); }
+.home-cards .strava-link { margin-top: calc(var(--px) * 1); }
 .jumps-title { margin: calc(var(--px) * 8) 0 calc(var(--px) * 2); font-size: var(--fs-ui); }
 .jumps {
   display: grid;
