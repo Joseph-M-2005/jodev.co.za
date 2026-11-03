@@ -64,6 +64,34 @@ export function trackedEfforts(activity: StravaActivity, athleteId: number): Eff
   })
 }
 
+// One entry from GET /athlete/activities, just the fields we read
+export type StravaSummary = {
+  id: number
+  athlete?: { id: number }
+  sport_type?: string
+  visibility?: string
+  distance?: number
+  moving_time?: number
+  start_date_local?: string
+}
+export type LatestRun = { activityId: number; date: string; metres: number; seconds: number }
+
+// The newest of the athlete's runs that's visible to Everyone (Strava lists newest first). Date only, never the time of day or the title.
+export function latestRun(activities: StravaSummary[], athleteId: number): LatestRun | null {
+  const run = activities.find(
+    (a) =>
+      a.athlete?.id === athleteId &&
+      RUNS.has(a.sport_type ?? '') &&
+      a.visibility === 'everyone' &&
+      Number.isSafeInteger(a.id) &&
+      typeof a.distance === 'number' && a.distance > 0 &&
+      Number.isSafeInteger(a.moving_time) && (a.moving_time as number) > 0 &&
+      /^\d{4}-\d{2}-\d{2}/.test(a.start_date_local ?? ''),
+  )
+  if (!run) return null
+  return { activityId: run.id, date: run.start_date_local!.slice(0, 10), metres: run.distance!, seconds: run.moving_time! }
+}
+
 export type StravaEvent = {
   object_type: 'activity' | 'athlete'
   object_id: number
@@ -116,6 +144,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS strava_tokens (id INTEGER PRIMARY KEY CHECK (id = 1), box TEXT NOT NULL)',
   'CREATE TABLE IF NOT EXISTS strava_best_efforts (name TEXT PRIMARY KEY, seconds INTEGER NOT NULL, date TEXT NOT NULL, activity_id INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS strava_stats (id INTEGER PRIMARY KEY CHECK (id = 1), ytd TEXT NOT NULL, updated_at TEXT NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS strava_latest_run (id INTEGER PRIMARY KEY CHECK (id = 1), activity_id INTEGER NOT NULL, date TEXT NOT NULL, metres REAL NOT NULL, seconds INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS strava_events (activity_id INTEGER NOT NULL, aspect TEXT NOT NULL, event_time INTEGER NOT NULL, status TEXT NOT NULL, PRIMARY KEY (activity_id, aspect, event_time))',
 ]
 let ready: Promise<unknown> | undefined
@@ -187,6 +216,23 @@ async function syncStats(db: D1, cfg: Config, token: string): Promise<void> {
     .run()
 }
 
+// Re-reads the latest few activities each time rather than tracking events, so a deleted or hidden run drops off by itself
+async function syncLatest(db: D1, cfg: Config, token: string): Promise<void> {
+  const activities = await api<StravaSummary[]>('/athlete/activities?per_page=10', token)
+  const run = latestRun(Array.isArray(activities) ? activities : [], cfg.athleteId)
+  if (!run) {
+    await db.prepare('DELETE FROM strava_latest_run').run()
+    return
+  }
+  await db
+    .prepare(
+      `INSERT INTO strava_latest_run (id, activity_id, date, metres, seconds) VALUES (1, ?, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET activity_id = excluded.activity_id, date = excluded.date, metres = excluded.metres, seconds = excluded.seconds`,
+    )
+    .bind(run.activityId, run.date, run.metres, run.seconds)
+    .run()
+}
+
 // Runs after the webhook has already answered Strava. Failures are marked so the daily cron retries them.
 async function processEvent(db: D1, cfg: Config, e: { activityId: number; aspect: string; eventTime: number }): Promise<void> {
   const mark = (status: string) =>
@@ -196,6 +242,7 @@ async function processEvent(db: D1, cfg: Config, e: { activityId: number; aspect
     // Deleting a PB run doesn't bring back the previous PB (we don't keep history); STRAVA.md lists this
     if (e.aspect !== 'delete') await syncActivity(db, cfg, token, e.activityId)
     await syncStats(db, cfg, token)
+    await syncLatest(db, cfg, token)
     await mark('done')
   } catch (err) {
     console.error('Strava event failed', e.activityId, e.aspect, (err as Error).message)
@@ -223,11 +270,13 @@ async function publicData(db: D1) {
   await setup(db)
   const { results } = await db.prepare('SELECT name, seconds, date, activity_id FROM strava_best_efforts').all<{ name: string; seconds: number; date: string; activity_id: number }>()
   const stats = await db.prepare('SELECT ytd, updated_at FROM strava_stats WHERE id = 1').first<{ ytd: string; updated_at: string }>()
+  const last = await db.prepare('SELECT activity_id, date, metres, seconds FROM strava_latest_run WHERE id = 1').first<{ activity_id: number; date: string; metres: number; seconds: number }>()
   const bestEfforts = EFFORTS.flatMap(({ name }) => {
     const row = results.find((r) => r.name === name)
     return row ? [{ name, seconds: row.seconds, date: row.date, activityId: row.activity_id }] : []
   })
-  return { bestEfforts, ytd: stats ? JSON.parse(stats.ytd) : null, updatedAt: stats?.updated_at ?? null }
+  const latest: LatestRun | null = last ? { activityId: last.activity_id, date: last.date, metres: last.metres, seconds: last.seconds } : null
+  return { bestEfforts, ytd: stats ? JSON.parse(stats.ytd) : null, latestRun: latest, updatedAt: stats?.updated_at ?? null }
 }
 
 const json = (body: object, status = 200, headers: HeadersInit = {}) => Response.json(body, { status, headers })
@@ -302,7 +351,10 @@ export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promis
       await setup(env.DB)
       const token = await accessToken(env.DB, cfg)
       for (const id of ids as number[]) await syncActivity(env.DB, cfg, token, id)
-      if (body?.stats === true) await syncStats(env.DB, cfg, token)
+      if (body?.stats === true) {
+        await syncStats(env.DB, cfg, token)
+        await syncLatest(env.DB, cfg, token)
+      }
     } catch (err) {
       console.error('Strava sync failed', (err as Error).message)
       return json({ error: (err as Error).message }, 502)
@@ -328,6 +380,7 @@ export async function stravaDaily(env: StravaEnv): Promise<void> {
   try {
     const token = await accessToken(env.DB, cfg)
     await syncStats(env.DB, cfg, token)
+    await syncLatest(env.DB, cfg, token)
   } catch (err) {
     console.error('Strava daily stats failed', (err as Error).message)
   }

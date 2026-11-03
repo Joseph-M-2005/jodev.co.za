@@ -2,7 +2,7 @@
 // Node runs the TypeScript directly.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { checkEvent, decrypt, encrypt, same, trackedEfforts, type StravaActivity } from '../strava.ts'
+import { checkEvent, decrypt, encrypt, latestRun, same, trackedEfforts, type StravaActivity, type StravaSummary } from '../strava.ts'
 
 const ATHLETE = 1234
 const SUBSCRIPTION = 99
@@ -44,6 +44,20 @@ test("only the athlete's runs give best efforts, at the tracked distances, date 
   assert.deepEqual(trackedEfforts({ ...run, athlete: { id: 1 } }, ATHLETE), [], "someone else's run")
   assert.deepEqual(trackedEfforts({ ...run, sport_type: 'Ride' }, ATHLETE), [], 'not a run')
   assert.deepEqual(trackedEfforts({ ...run, best_efforts: [{ distance: 5000, elapsed_time: 0, start_date_local: '2026-05-01' }] }, ATHLETE), [], 'no time')
+})
+
+test('the latest run is the newest public run of mine, date only', () => {
+  const run: StravaSummary = { id: 9, athlete: { id: ATHLETE }, sport_type: 'Run', visibility: 'everyone', distance: 8204.3, moving_time: 2465, start_date_local: '2026-11-02T06:05:00Z' }
+  const newer = (changes: Partial<StravaSummary>): StravaSummary => ({ ...run, id: 10, start_date_local: '2026-11-03T06:00:00Z', ...changes })
+  const expected = { activityId: 9, date: '2026-11-02', metres: 8204.3, seconds: 2465 }
+  assert.deepEqual(latestRun([run], ATHLETE), expected)
+  assert.deepEqual(latestRun([newer({}), run], ATHLETE), { ...expected, activityId: 10, date: '2026-11-03' }, 'newest first')
+  assert.deepEqual(latestRun([newer({ athlete: { id: 1 } }), run], ATHLETE), expected, "someone else's run")
+  assert.deepEqual(latestRun([newer({ sport_type: 'Ride' }), run], ATHLETE), expected, 'not a run')
+  assert.deepEqual(latestRun([newer({ visibility: 'followers_only' }), run], ATHLETE), expected, 'not public')
+  assert.deepEqual(latestRun([newer({ distance: 0 }), run], ATHLETE), expected, 'no distance')
+  assert.deepEqual(latestRun([newer({ moving_time: 0 }), run], ATHLETE), expected, 'no time')
+  assert.equal(latestRun([], ATHLETE), null)
 })
 
 test('tokens round-trip through AES-GCM and a different key cannot read them', async () => {
