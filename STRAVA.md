@@ -1,7 +1,7 @@
 # Strava Best Efforts on jodev.co.za
 
 The About page shows my **Strava Best Efforts** (fastest 5K, 10K, half marathon and marathon) and my
-running totals for the year, live from Strava. This document explains how the data gets there, why it's
+running totals for the year, live from Strava. The home page shows the totals and my latest run. This document explains how the data gets there, why it's
 built this way, and how it's kept secure.
 
 The short version:
@@ -34,8 +34,9 @@ flowchart LR
 |---|---|
 | `strava.ts` | Everything Strava: routes, webhook handling, token storage, syncing, the daily job |
 | `worker.ts` | Sends `/api/strava*` to `strava.ts` and runs the daily cron |
-| D1 (`DB`) | Stores the encrypted tokens, the best efforts, the yearly totals and recent webhook events |
+| D1 (`DB`) | Stores the encrypted tokens, the best efforts, the yearly totals, the latest run and recent webhook events |
 | `src/components/StravaStats.tsx` | The cards on the About page |
+| `src/pages/index.tsx` | The running card on the home page (totals and latest run) |
 | `scripts/strava.mjs` | One-time setup on my own machine: connect the account, create the webhook subscription |
 
 ## The flows
@@ -57,7 +58,8 @@ sequenceDiagram
 ```
 
 The response only ever contains: distance name, time in seconds, the date (no time of day), the Strava
-activity id (for the "View on Strava" link) and the yearly run count, distance and moving time.
+activity id (for the "View on Strava" link), the yearly run count, distance and moving time, and the
+latest run's distance, moving time, date and activity id.
 
 ### I finish a run
 
@@ -74,6 +76,8 @@ sequenceDiagram
   W->>DB: for each of 5K, 10K, half, marathon: save only if faster
   W->>S: GET /athletes/me/stats
   W->>DB: save this year's totals
+  W->>S: GET /athlete/activities (latest 10)
+  W->>DB: save the newest public run, or clear it if there's none
   W->>W: clear the cached /api/strava copy
 ```
 
@@ -90,6 +94,11 @@ WHERE excluded.seconds < strava_best_efforts.seconds
 
 Two events arriving at once can't put a slower time back, because the comparison and the write happen together.
 
+The latest run works differently: every sync re-reads my 10 newest activities and keeps the first one
+that's a run, mine and visible to Everyone (the same rule as the yearly totals). Because it's re-read
+rather than worked out from the event, deleting a run or making it followers-only puts the one before it
+back, and a missed webhook is fixed by the next sync. Its title is never stored, since titles can name places.
+
 ### Seeding
 
 Rather than syncing years of history, which is one API call per run, the starting values come from the two
@@ -105,9 +114,12 @@ The endpoint takes activity IDs only. It fetches them from Strava and runs them 
 faster" rule as webhooks. It never accepts times or other data. It then clears the cached copy of
 `/api/strava`, so the new numbers show straight away.
 
+`"stats": true` also refreshes the yearly totals and the latest run, so `{"activityIds":[],"stats":true}`
+refreshes just those.
+
 ### Every day at 03:00 UTC
 
-- Refreshes the yearly totals, so they reset on 1 January even if I haven't run.
+- Refreshes the yearly totals, so they reset on 1 January even if I haven't run, and the latest run.
 - Retries webhook events that failed (for example because Strava was down).
 - Forgets events older than 30 days.
 
@@ -120,6 +132,7 @@ All tables are created on first use (`CREATE TABLE IF NOT EXISTS`), so there are
 | `strava_tokens` | `id` (always 1), `box` | Access + refresh token, AES-256-GCM encrypted |
 | `strava_best_efforts` | `name`, `seconds`, `date`, `activity_id` | One row per distance |
 | `strava_stats` | `id` (always 1), `ytd`, `updated_at` | `ytd` is `{ runs, metres, seconds }` |
+| `strava_latest_run` | `id` (always 1), `activity_id`, `date`, `metres`, `seconds` | The newest public run; moving time, date only |
 | `strava_events` | `activity_id`, `aspect`, `event_time`, `status` | Dedupes webhook retries; `pending`, `done` or `failed` |
 
 ## Security
@@ -136,7 +149,7 @@ Strava access is a personal account, so the design assumes every public URL will
 | Guessing secrets by timing | Every secret comparison hashes both sides and compares the digests in constant time. |
 | A missing secret leaving something half-open | Each route checks its settings first and answers 404 if anything is missing (CI and tests run that way). |
 | Revoking access in Strava | Strava sends a deauthorization event and the stored tokens are deleted straight away. |
-| Leaking where I live or run | No GPS, maps, routes, start points or times of day are stored or returned. Dates only. |
+| Leaking where I live or run | No GPS, maps, routes, start points, run titles or times of day are stored or returned. Dates only. The latest run is only ever one visible to Everyone on Strava. |
 | Too much access | OAuth scope is `read,activity:read`: public and followers-only activities, read only. |
 | Tokens in logs or shell history | Logs only ever include status codes. The setup script pipes the refresh token straight into `wrangler secret put`, so it's never printed or typed. |
 | SQL injection | Every query uses bound parameters; activity IDs must be positive integers. |
@@ -148,7 +161,7 @@ There is no public OAuth route on the site at all: the one-time connection happe
 
 | Method + path | Who | Answer |
 |---|---|---|
-| `GET /api/strava` | Anyone | `{ bestEfforts: [{ name, seconds, date, activityId }], ytd: { runs, metres, seconds } \| null, updatedAt }` |
+| `GET /api/strava` | Anyone | `{ bestEfforts: [{ name, seconds, date, activityId }], ytd: { runs, metres, seconds } \| null, latestRun: { activityId, date, metres, seconds } \| null, updatedAt }` |
 | `GET /api/strava/webhook/<secret>` | Strava, once | Echoes `hub.challenge` when `hub.verify_token` matches (subscription check) |
 | `POST /api/strava/webhook/<secret>` | Strava | `200 {"ok":true}`, always the same, so it gives nothing away |
 | `POST /api/strava/admin/sync` | Me | Body `{ "activityIds": [..], "stats": true }`, answers with the new public data |
@@ -196,17 +209,18 @@ npx wrangler d1 execute jodev --remote --command "DELETE FROM strava_best_effort
 
 ## Limits and known gaps
 
-- **API usage:** each new run costs 2 to 3 Strava requests (a token refresh at most every 6 hours, the run, the totals). Strava's default limit is 100 reads per 15 minutes and 1,000 per day.
+- **API usage:** each new run costs 3 to 4 Strava requests (a token refresh at most every 6 hours, the run, the totals, the latest activities). Strava's default limit is 100 reads per 15 minutes and 1,000 per day.
 - **Deleted or cropped PB runs aren't recalculated.** No history is kept, so the next-best time isn't known. Fix it by hand as above.
 - **The yearly totals only count runs visible to Everyone.** That's Strava's rule for the stats endpoint, so followers-only runs aren't counted.
 - **Updates can take up to 5 minutes to appear in some places.** Syncs clear the cached copy, but Cloudflare's cache is per data centre. A seed clears it in the data centre near me (and so near most visitors). A webhook clears it wherever Strava's request lands. Everywhere else the old copy expires within 5 minutes.
-- **Missed webhooks:** if Strava gives up delivering an event (it tries 3 times), that run isn't checked unless it's edited later. A future improvement: have the daily job check the last couple of days of activities.
+- **Missed webhooks:** if Strava gives up delivering an event (it tries 3 times), that run isn't checked for best efforts unless it's edited later. The latest run and the totals still catch up at the next sync or the daily job. A future improvement: have the daily job check the last couple of days of activities for best efforts too.
 
 ## Tests
 
 - `test/strava.test.ts`:
   - which webhook events are acted on
   - which efforts are taken from a run (athlete, sport and distance checks, date only)
+  - which activity counts as the latest run (mine, a run, public, newest first, date only)
   - token encryption round trips
   - exact secret comparison
 - `test/site.test.js`:

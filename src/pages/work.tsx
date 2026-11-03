@@ -65,7 +65,7 @@ const newRun: Step[] = [
   { title: 'A new run', text: 'I upload a run to Strava.' },
   { title: 'Webhook', text: 'Strava tells the Worker a run was added.' },
   { title: 'Double-check', text: "The Worker fetches the run from Strava itself, since webhooks aren't signed." },
-  { title: 'D1 database', text: 'Saves any new personal best.' },
+  { title: 'D1 database', text: 'Saves any new personal best and my latest run.' },
   { title: 'About page', text: 'Reads a cached copy, so visitors never wait on Strava.' },
 ]
 
