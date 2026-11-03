@@ -3,19 +3,20 @@ import ExternalLink from './ExternalLink'
 
 // Shape of GET /api/strava (strava.ts publicData)
 type Effort = { name: string; seconds: number; date: string; activityId: number }
-type Data = { bestEfforts: Effort[]; ytd: { runs: number; metres: number; seconds: number } | null }
+type LatestRun = { activityId: number; date: string; metres: number; seconds: number }
+export type Data = { bestEfforts: Effort[]; ytd: { runs: number; metres: number; seconds: number } | null; latestRun: LatestRun | null }
 
 const DISTANCES = ['5K', '10K', 'Half Marathon', 'Marathon']
 
 const pad = (n: number) => String(n).padStart(2, '0')
 // 19:42 or 1:05:09
-const time = (seconds: number) => {
+export const time = (seconds: number) => {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   return h ? `${h}:${pad(m)}:${pad(seconds % 60)}` : `${m}:${pad(seconds % 60)}`
 }
 // The API sends dates only; reading them as UTC keeps the day from shifting
-const day = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+export const day = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
 // Strava Best Efforts and this year's totals, live from the Worker. `goal` is the one card typed in by hand.
 export default function StravaStats({ goal }: { goal: string }) {

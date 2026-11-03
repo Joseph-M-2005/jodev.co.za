@@ -64,6 +64,7 @@ test('/api/strava serves the public Strava data', async () => {
   const data = await res.json()
   assert.ok(Array.isArray(data.bestEfforts))
   assert.ok('ytd' in data)
+  assert.ok('latestRun' in data)
 })
 
 // Unset secrets (CI, the local harness) answer 404, the live site 401: either way nothing gets through
