@@ -315,17 +315,23 @@ textarea.input { resize: vertical; }
 .strava-link { display: block; width: fit-content; font-weight: 700; }
 .strava-logo { display: inline-block; margin-top: calc(var(--px) * 6); }
 .strava-logo img { display: block; image-rendering: auto; }
-/* Home page cards under the hero */
+/* Home page cards under the hero. Bigger body text than other cards: Pixelify gets hard to read when small. */
 .home-cards { padding-top: 0; }
+.home-cards .card { grid-template-rows: auto auto 1fr auto; gap: calc(var(--px) * 4); font-size: 1.25rem; }
+.home-cards .kicker { margin: 0; }
 .home-cards h2 { margin: 0; font-size: var(--fs-ui); line-height: 1.5; }
-.home-cards .num { font-size: max(12px, calc(var(--fs-ui) * 0.75)); line-height: 1.4; }
-.home-cards .stat { font-size: var(--fs-ui); }
-.home-cards .strava-logo { margin-top: 0; }
-/* Link at the bottom of the card, so the three line up when their text is different lengths */
-.card-link { align-self: end; width: fit-content; font-weight: 700; }
-.home-cards .card { grid-template-rows: auto auto 1fr auto; }
-.card-body { display: grid; align-content: start; gap: calc(var(--px) * 3); }
-.home-cards .strava-link { margin-top: calc(var(--px) * 1); }
+.card-body { display: grid; align-content: start; gap: calc(var(--px) * 4); }
+/* Logo on the left, link on the right; they stack when there isn't room */
+.card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: calc(var(--px) * 3); }
+.card-foot .strava-logo { margin: 0; }
+.card-link { font-weight: 700; }
+/* Distance, time and pace in a row, wrapping on narrow phones */
+.run-stats { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin: 0; }
+.run-stats dt { font-size: 1.25rem; }
+.run-stats .stat { font-size: var(--fs-ui); }
+.run-stats dd { margin: calc(var(--px) * 1) 0 0; }
+.run-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--px) * 4); }
+.run-date .strava-link { display: inline; }
 .jumps-title { margin: calc(var(--px) * 8) 0 calc(var(--px) * 2); font-size: var(--fs-ui); }
 .jumps {
   display: grid;

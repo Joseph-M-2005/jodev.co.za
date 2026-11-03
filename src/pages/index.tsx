@@ -5,14 +5,17 @@ import Layout from '../components/Layout'
 import ExternalLink from '../components/ExternalLink'
 import { day, time, type Data } from '../components/StravaStats'
 
-function Card({ kicker, title, link, href, children }: { kicker: string; title: string; link: string; href: string; children: ReactNode }) {
+function Card({ kicker, title, link, href, extra, children }: { kicker: string; title: string; link: string; href: string; extra?: ReactNode; children: ReactNode }) {
   return (
     <li>
       <div className="card panel">
-        <span className="num">{kicker}</span>
+        <p className="kicker">{kicker}</p>
         <h2>{title}</h2>
         <div className="card-body">{children}</div>
-        <a className="card-link" href={href}>{link}<span aria-hidden="true"> &gt;</span></a>
+        <div className="card-foot">
+          {extra}
+          <a className="card-link" href={href}>{link}<span aria-hidden="true"> &gt;</span></a>
+        </div>
       </div>
     </li>
   )
@@ -23,7 +26,7 @@ const pace = (seconds: number, metres: number) => `${time(Math.round(seconds / (
 // "2 Nov", with the year only if it isn't this year
 const shortDay = (date: string) => (date.startsWith(String(new Date().getFullYear())) ? day(date).replace(/ \d{4}$/, '') : day(date))
 
-// This year's km and runs, and my latest run. Plain `npm run dev` has no Worker, so there it falls back to a line of text.
+// My latest run. Plain `npm run dev` has no Worker, so there it falls back to a line of text.
 function RunCard() {
   const [data, setData] = useState<Data>()
   const [failed, setFailed] = useState(false)
@@ -34,29 +37,29 @@ function RunCard() {
       .then(setData, () => setFailed(true))
   }, [])
 
-  const ytd = data?.ytd
   const last = data?.latestRun
+  // Strava's brand guidelines: their logo wherever their data is shown
+  const logo = last && (
+    <ExternalLink className="strava-logo" href="https://www.strava.com"><img src="/powered-by-strava.svg" alt="Powered by Strava" width="183" height="19" /></ExternalLink>
+  )
   return (
-    <Card kicker="Running" title="Off the clock" link="My PBs" href="/about#running">
-      {failed || (data && !ytd && !last) ? (
+    <Card kicker="Running" title="My last run" link="My PBs" href="/about#running" extra={logo}>
+      {failed || (data && !last) ? (
         <p>When I'm not coding, I'm usually out running.</p>
       ) : (
         <>
-          {(!data || ytd) && (
-            <p aria-busy={!data}>
-              <span className="stat">{ytd ? Math.round(ytd.metres / 1000) : '...'} km</span> and{' '}
-              <span className="stat">{ytd ? ytd.runs : '...'}</span> runs so far this year.
-            </p>
-          )}
+          {/* Numbers in Press Start 2P: Pixelify's digits are hard to read */}
+          <dl className="run-stats" aria-busy={!data}>
+            <div><dt>Distance</dt><dd className="stat">{last ? `${(last.metres / 1000).toFixed(1)} km` : '...'}</dd></div>
+            <div><dt>Time</dt><dd className="stat">{last ? time(last.seconds) : '...'}</dd></div>
+            <div><dt>Pace</dt><dd className="stat">{last ? pace(last.seconds, last.metres) : '...'}</dd></div>
+          </dl>
           {last && (
-            <p>
-              Last run: {(last.metres / 1000).toFixed(1)} km in {time(last.seconds)} <span className="nowrap">({pace(last.seconds, last.metres)})</span> on{' '}
-              <span className="nowrap">{shortDay(last.date)}</span>.
+            <p className="run-date">
+              <span className="stat-date">{shortDay(last.date)}</span>
               <ExternalLink className="strava-link" href={`https://www.strava.com/activities/${last.activityId}`}>View on Strava</ExternalLink>
             </p>
           )}
-          {/* Strava's brand guidelines: their logo wherever their data is shown */}
-          <ExternalLink className="strava-logo" href="https://www.strava.com"><img src="/powered-by-strava.svg" alt="Powered by Strava" width="183" height="19" /></ExternalLink>
         </>
       )}
     </Card>
