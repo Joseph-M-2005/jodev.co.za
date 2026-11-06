@@ -633,4 +633,9 @@ textarea.input { resize: vertical; }
 .outcome.drill .outcome-mark { color: var(--blue-bright); }
 .outcome.rollback_failed .outcome-mark { color: var(--critical); }
 .status .status-heading { margin: calc(var(--px) * 12) 0 calc(var(--px) * 4); }
+.status .status-heading:first-child { margin-top: calc(var(--px) * 8); }
+.status-about { margin-bottom: calc(var(--px) * 6); border-bottom: var(--b) solid var(--shade); }
+.status-about summary::-webkit-details-marker { display: none; }
+.status-about .project-section-body { padding-bottom: calc(var(--px) * 4); }
+.status-about .project-section-body p { max-width: 65ch; margin: 0; font-size: 1.125rem; }
 .status-intro { margin: 0; font-size: 1.125rem; }
