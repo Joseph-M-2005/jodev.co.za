@@ -20,7 +20,7 @@ after(() => server?.close())
 const BROWSER = { headers: { 'user-agent': 'Mozilla/5.0' } }
 const CURL = { headers: { 'user-agent': 'curl/8.7.1' } }
 
-for (const path of ['/', '/cv', '/work', '/about', '/contact']) {
+for (const path of ['/', '/cv', '/work', '/about', '/contact', '/status']) {
   test(`${path} serves its page with the security headers`, async () => {
     const res = await get(path, BROWSER)
     assert.equal(res.status, 200)
@@ -65,6 +65,17 @@ test('/api/strava serves the public Strava data', async () => {
   assert.ok(Array.isArray(data.bestEfforts))
   assert.ok('ytd' in data)
   assert.ok('latestRun' in data)
+})
+
+test('/api/status serves deploys and uptime', async () => {
+  const res = await get('/api/status')
+  assert.equal(res.status, 200)
+  const data = await res.json()
+  assert.ok(Array.isArray(data.deploys))
+  assert.ok(Array.isArray(data.checks))
+  for (const window of ['day', 'week', 'month']) assert.equal(typeof data.uptime[window]?.total, 'number')
+  // Read-only: GitHub Actions writes through wrangler, never through the Worker
+  assert.equal((await get('/api/status', { method: 'POST', body: '{}' })).status, 405)
 })
 
 // Unset secrets (CI, the local harness) answer 404, the live site 401: either way nothing gets through

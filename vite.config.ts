@@ -12,7 +12,7 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
     rolldownOptions: {
-      input: ['index.html', '404.html', 'cv.html', 'work.html', 'about.html', 'contact.html'].map((f) => `src/${f}`),
+      input: ['index.html', '404.html', 'cv.html', 'work.html', 'about.html', 'contact.html', 'status.html'].map((f) => `src/${f}`),
     },
   },
 })
