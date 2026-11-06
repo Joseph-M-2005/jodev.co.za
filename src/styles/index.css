@@ -596,3 +596,40 @@ textarea.input { resize: vertical; }
   .btn, .level { transition: none; }
   .btn:hover, .btn:active, .level:hover { transform: none; }
 }
+
+/* Status page. Status colours (from the dataviz palette) sit on the page background, where all of them clear 3:1;
+   each one comes with an icon, a texture or a label, so none relies on colour alone. */
+.status { --good: #0ca30c; --serious: #ec835a; --critical: #d03b3b; }
+.checks { margin: calc(var(--px) * 8) 0 0; }
+.check-strip {
+  display: grid;
+  grid-template-columns: repeat(48, 1fr);
+  gap: var(--b);
+  margin: calc(var(--px) * 3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.check { display: block; height: calc(var(--px) * 6); }
+.check-strip .check { cursor: default; }
+.check-strip .check:hover, .check-strip .check:focus-visible { outline: var(--b) solid var(--blue-bright); outline-offset: var(--b); }
+.check.up { background: var(--good); }
+/* Down gets stripes as well as red, for colour-blind readers and forced colours */
+.check.down { background: repeating-linear-gradient(45deg, var(--critical) 0 var(--px), #8a1f1f var(--px) calc(var(--px) * 2)); }
+.check.none { box-shadow: inset 0 0 0 var(--b) var(--shade); }
+.check-readout { margin: calc(var(--px) * 3) 0 0; font-size: 1.125rem; min-height: 1.5em; }
+.check-key { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin: calc(var(--px) * 2) 0 0; padding: 0; list-style: none; }
+.check-key li { display: flex; align-items: center; gap: 0.5em; }
+.check-key .check { width: calc(var(--px) * 3); height: calc(var(--px) * 3); }
+
+.table-scroll { overflow-x: auto; margin-top: calc(var(--px) * 4); }
+.deploys { width: 100%; border-collapse: collapse; font-size: 1.125rem; }
+.deploys th { font: var(--fs-ui)/1.4 var(--font-heading); color: var(--blue-bright); text-align: left; }
+.deploys th, .deploys td { padding: calc(var(--px) * 2) calc(var(--px) * 3) calc(var(--px) * 2) 0; white-space: nowrap; }
+.deploys tbody tr { border-top: var(--b) solid var(--shade); }
+.outcome-mark { display: inline-block; width: 1.5em; text-align: center; font-weight: 700; }
+.outcome.live .outcome-mark { color: var(--good); }
+.outcome.rolled_back .outcome-mark { color: var(--serious); }
+.outcome.drill .outcome-mark { color: var(--blue-bright); }
+.outcome.rollback_failed .outcome-mark { color: var(--critical); }
+.status .status-heading { margin: calc(var(--px) * 12) 0 calc(var(--px) * 4); }
+.status-intro { margin: 0; font-size: 1.125rem; }

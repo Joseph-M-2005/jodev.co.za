@@ -86,7 +86,20 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler rollback "$BLUE" -y --message "Live check failed for $GITHUB_SHA, back to blue"
       - name: Check the live site on blue
+        id: blue-check
         if: failure() && env.SWITCHED == '1'
         env:
           SITE_URL: https://jodev.co.za
         run: sleep 15 && node --test test/site.test.js
+      # One row per run for jodev.co.za/status, however it ended. Never fails the job: a missing row is the worst case.
+      # The token needs D1 Edit as well as Workers.
+      - name: Record the deploy
+        if: always()
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          JOB_STATUS: ${{ job.status }}
+          REHEARSE: ${{ inputs.rehearse_rollback }}
+          BLUE_CHECK: ${{ steps.blue-check.outcome }}
+        run: node scripts/status-record.ts deploy

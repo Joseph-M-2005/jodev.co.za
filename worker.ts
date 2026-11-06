@@ -1,5 +1,6 @@
 import { WorkerMailer } from 'worker-mailer'
 import { contact, deadLetters, ME, sendBatch, type ContactEnv, type ContactMessage, type Mail, type QueueBatch } from './contact'
+import { status } from './status'
 import { strava, stravaDaily, type Ctx, type StravaEnv } from './strava'
 
 interface Env extends StravaEnv, ContactEnv {
@@ -71,6 +72,7 @@ export default {
       return new Response(card, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', Vary: 'User-Agent' } })
     }
     if (pathname === '/api/strava' || pathname.startsWith('/api/strava/')) return strava(request, env, ctx)
+    if (pathname === '/api/status') return status(request, env, ctx)
     if (pathname === '/api/contact') return contact(request, env)
     return env.ASSETS.fetch(request)
   },

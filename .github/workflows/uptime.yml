@@ -1,0 +1,45 @@
+name: Uptime
+
+# Every 30 minutes, the same tests the Deploy workflow uses run against jodev.co.za from GitHub's servers, and the
+# result goes to D1 for jodev.co.za/status. It runs outside Cloudflare on purpose: a check inside the Worker would
+# stop running in exactly the outage it should record. GitHub can start scheduled runs late, and turns them off after
+# 60 days without commits.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency: uptime
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      # site.test.js imports wrangler; same install as Deploy, no install scripts
+      - run: npm ci --ignore-scripts
+      - name: Test the live site
+        id: tests
+        continue-on-error: true
+        env:
+          SITE_URL: https://jodev.co.za
+        run: node --test test/site.test.js
+      # The Cloudflare token goes only to this step, never to npm ci or the tests
+      - name: Record the check
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TESTS: ${{ steps.tests.outcome }}
+        run: node scripts/status-record.ts check
+      # A red run is the alert: GitHub emails on a failed scheduled workflow
+      - name: Fail if the site is down
+        if: steps.tests.outcome == 'failure'
+        run: exit 1

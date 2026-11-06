@@ -14,6 +14,9 @@ Try `curl https://jodev.co.za` too.
     Code in `contact.ts`
   - `/api/strava`: running stats on the About page (see [STRAVA.md](STRAVA.md))
   - `curl` on `/`: a plain-text card instead of HTML
+  - `/api/status`: deploy history and uptime for the `/status` page (`status.ts`). GitHub Actions writes the rows
+    with `scripts/status-record.ts`: the Deploy workflow records every run, and the Uptime workflow runs the live tests
+    every 30 minutes
 - `test/`: tests that run against a local copy of the Worker, or the live site
 
 ## Running it
@@ -43,6 +46,9 @@ Manual, from GitHub Actions > Deploy > Run workflow. It's blue-green:
 4. Roll back automatically if that check fails
 
 PRs run the build and tests via the Check workflow.
+
+Every Deploy run is recorded for `/status` (live, rolled back, fire drill, stopped). The Uptime workflow does the same
+for its checks. Both write to D1 with `wrangler d1 execute`, so `CLOUDFLARE_API_TOKEN` needs D1 Edit as well as Workers.
 
 ### One-time setup
 
