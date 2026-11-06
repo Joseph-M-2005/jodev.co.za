@@ -57,7 +57,8 @@ const pageView: Step[] = [
 
 const contact: Step[] = [
   { title: 'You press Send', text: 'Your browser checks the form, and Turnstile adds proof that you are human.' },
-  { title: 'The Worker', text: 'Checks the rate limit, a hidden bot trap, every field and the Turnstile proof.' },
+  { title: 'The Worker', text: 'Checks the rate limit, a hidden bot trap, every field and the Turnstile proof, then puts the message on a queue.' },
+  { title: 'Queue', text: "Hands it to Zoho. If Zoho is down, it tries again for about half an hour, and saves anything that still won't go." },
   { title: 'Zoho Mail', text: 'Emails the message to me over SMTP.' },
 ]
 
@@ -127,7 +128,7 @@ const highlights: { title: string; text: ReactNode }[] = [
   },
 ]
 
-const tech = ['React', 'TypeScript', 'Vite', 'CSS', 'Cloudflare Workers', 'Cloudflare D1', 'Cloudflare Access', 'Turnstile', 'Strava API', 'GitHub Actions', 'Node test runner']
+const tech = ['React', 'TypeScript', 'Vite', 'CSS', 'Cloudflare Workers', 'Cloudflare D1', 'Cloudflare Queues', 'Cloudflare Access', 'Turnstile', 'Strava API', 'GitHub Actions', 'Node test runner']
 
 function Work() {
   return (
