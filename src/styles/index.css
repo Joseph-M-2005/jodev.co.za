@@ -40,6 +40,10 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Always leave room for the scrollbar, so short pages (Work with its projects closed) line up with long ones
+   instead of shifting sideways when you switch between them */
+html { scrollbar-gutter: stable; }
+
 body {
   margin: 0;
   background: var(--bg);
