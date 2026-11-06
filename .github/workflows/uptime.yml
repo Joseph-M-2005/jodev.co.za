@@ -6,7 +6,9 @@ name: Uptime
 # 60 days without commits.
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    # Every 30 minutes, at :13 and :43 rather than :00 and :30: everyone schedules on the hour and half hour, so
+    # GitHub starts those runs late or drops them
+    - cron: "13,43 * * * *"
   workflow_dispatch:
 
 concurrency: uptime
