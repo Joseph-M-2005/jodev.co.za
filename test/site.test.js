@@ -20,7 +20,9 @@ after(() => server?.close())
 const BROWSER = { headers: { 'user-agent': 'Mozilla/5.0' } }
 const CURL = { headers: { 'user-agent': 'curl/8.7.1' } }
 
-for (const path of ['/', '/cv', '/work', '/about', '/contact', '/status']) {
+const PAGES = ['/', '/cv', '/work', '/about', '/contact', '/status']
+
+for (const path of PAGES) {
   test(`${path} serves its page with the security headers`, async () => {
     const res = await get(path, BROWSER)
     assert.equal(res.status, 200)
@@ -37,6 +39,20 @@ test('pages point to the speculation rules, served with their own type', async (
   assert.match(res.headers.get('content-type'), /^application\/speculationrules\+json/)
   const { prerender } = await res.json()
   assert.ok(JSON.stringify(prerender).includes('/contact'), '/contact is excluded')
+})
+
+// Every page's canonical URL is in the sitemap, so a new page can't be left out of it
+test('the sitemap lists every page and robots.txt points to it', async () => {
+  const res = await get('/sitemap.xml')
+  assert.equal(res.status, 200)
+  assert.match(res.headers.get('content-type'), /xml/)
+  const sitemap = await res.text()
+  for (const path of PAGES) {
+    const html = await (await get(path, BROWSER)).text()
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1]
+    assert.ok(canonical && sitemap.includes(`<loc>${canonical}</loc>`), `${path} (${canonical}) is in the sitemap`)
+  }
+  assert.match(await (await get('/robots.txt')).text(), /^Sitemap: https:\/\/jodev\.co\.za\/sitemap\.xml$/m)
 })
 
 test('curl on / gets the terminal card', async () => {
