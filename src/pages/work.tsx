@@ -205,6 +205,7 @@ function Work() {
                   ))}
                 </div>
                 <Flow label="How a release goes out" steps={release} />
+                <p>Every run is logged, rollbacks and fire drills included. <a href="/status">See them on the status page</a>.</p>
               </Section>
             </div>
           </Project>
