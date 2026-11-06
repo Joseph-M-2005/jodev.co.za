@@ -4,3 +4,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=31536000
+  # Prerender same-origin pages on hover. /contact is left out so Turnstile doesn't spend a challenge early
+  Speculation-Rules: "/speculationrules.json"
+
+/speculationrules.json
+  Content-Type: application/speculationrules+json

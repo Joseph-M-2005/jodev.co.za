@@ -29,6 +29,16 @@ for (const path of ['/', '/cv', '/work', '/about', '/contact', '/status']) {
   })
 }
 
+test('pages point to the speculation rules, served with their own type', async () => {
+  const page = await get('/about', BROWSER)
+  assert.equal(page.headers.get('speculation-rules'), '"/speculationrules.json"')
+  const res = await get('/speculationrules.json')
+  assert.equal(res.status, 200)
+  assert.match(res.headers.get('content-type'), /^application\/speculationrules\+json/)
+  const { prerender } = await res.json()
+  assert.ok(JSON.stringify(prerender).includes('/contact'), '/contact is excluded')
+})
+
 test('curl on / gets the terminal card', async () => {
   const res = await get('/', CURL)
   assert.equal(res.status, 200)
