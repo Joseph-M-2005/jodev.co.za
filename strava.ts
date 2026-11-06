@@ -1,13 +1,13 @@
 // Strava Best Efforts and year-to-date stats for the About page. STRAVA.md explains the whole flow and the security model.
 
 // Just the parts of D1 and the Worker runtime this file uses
-interface D1Statement {
+export interface D1Statement {
   bind(...values: unknown[]): D1Statement
   first<T>(): Promise<T | null>
   all<T>(): Promise<{ results: T[] }>
   run(): Promise<{ meta: { changes: number } }>
 }
-interface D1 {
+export interface D1 {
   prepare(sql: string): D1Statement
   batch(statements: D1Statement[]): Promise<unknown>
 }

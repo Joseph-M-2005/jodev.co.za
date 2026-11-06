@@ -15,6 +15,17 @@
   ],
   // Strava data (STRAVA.md). No database_id: wrangler creates the database on the first deploy and reuses it after.
   "d1_databases": [{ "binding": "DB", "database_name": "jodev" }],
+  // Contact form emails (contact.ts). Create both once with `wrangler queues create <name>`: unlike D1 they aren't made on deploy.
+  "queues": {
+    "producers": [{ "binding": "CONTACT_QUEUE", "queue": "jodev-contact" }],
+    "consumers": [
+      // One batch at a time so a backlog can't burst past Zoho's hourly SMTP limit. After 5 retries (about half an hour
+      // of backoff) a message moves to the dead-letter queue.
+      { "queue": "jodev-contact", "max_batch_size": 10, "max_batch_timeout": 1, "max_retries": 5, "max_concurrency": 1, "dead_letter_queue": "jodev-contact-dlq" },
+      // Saves what's left to D1 (contact_failed)
+      { "queue": "jodev-contact-dlq", "max_batch_size": 10, "max_batch_timeout": 5, "max_retries": 3 }
+    ]
+  },
   // Daily at 03:00 UTC: Strava stats refresh and retries
   "triggers": { "crons": ["0 3 * * *"] },
   // Every uploaded version gets its own public workers.dev Version URL; the blue-green workflow tests green there.
