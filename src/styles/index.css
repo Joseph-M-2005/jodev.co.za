@@ -590,6 +590,7 @@ textarea.input { resize: vertical; }
   font: var(--fs-ui)/1.5 var(--font-heading);
 }
 .site-footer p { margin: 0; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 1rem 2rem; }
 
 @media (prefers-reduced-motion: reduce) {
   .cursor, .runner.jumping, .star, .cloud { animation: none; }

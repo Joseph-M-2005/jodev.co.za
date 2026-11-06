@@ -31,7 +31,10 @@ export default function Layout({ children }: { children: ReactNode }) {
       <footer className="site-footer">
         <div className="container">
           <p>© {new Date().getFullYear()} Joseph Mitchell</p>
-          <ExternalLink href="https://github.com/Joseph-M-2005">GitHub</ExternalLink>
+          <p className="footer-links">
+            <a href="/status">Status</a>
+            <ExternalLink href="https://github.com/Joseph-M-2005">GitHub</ExternalLink>
+          </p>
         </div>
       </footer>
     </>
