@@ -1,7 +1,6 @@
-import { StrictMode, useEffect, useState, type ReactNode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { useEffect, useState, type ReactNode } from 'react'
 import '../styles/index.css'
-import Layout from '../components/Layout'
+import { mount } from '../components/mount'
 import ExternalLink from '../components/ExternalLink'
 import { day, time, type Data } from '../components/StravaStats'
 
@@ -102,10 +101,4 @@ function Home() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Layout>
-      <Home />
-    </Layout>
-  </StrictMode>,
-)
+mount(<Home />)

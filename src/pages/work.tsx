@@ -1,7 +1,6 @@
-import { StrictMode, type ReactNode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { type ReactNode } from 'react'
 import '../styles/index.css'
-import Layout from '../components/Layout'
+import { mount } from '../components/mount'
 import ExternalLink from '../components/ExternalLink'
 
 const REPO = 'https://github.com/Joseph-M-2005/jodev.co.za'
@@ -215,10 +214,4 @@ function Work() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Layout>
-      <Work />
-    </Layout>
-  </StrictMode>,
-)
+mount(<Work />)

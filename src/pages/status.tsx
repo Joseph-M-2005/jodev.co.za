@@ -1,7 +1,6 @@
-import { StrictMode, useEffect, useState } from 'react'
-import { createRoot } from 'react-dom/client'
+import { useEffect, useState } from 'react'
 import '../styles/index.css'
-import Layout from '../components/Layout'
+import { mount } from '../components/mount'
 import ExternalLink from '../components/ExternalLink'
 
 const REPO = 'https://github.com/Joseph-M-2005/jodev.co.za'
@@ -187,10 +186,4 @@ function Status() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Layout>
-      <Status />
-    </Layout>
-  </StrictMode>,
-)
+mount(<Status />)
