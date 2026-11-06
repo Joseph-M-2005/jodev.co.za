@@ -118,16 +118,22 @@ function Status() {
         <a className="btn-raised back" href="/"><span aria-hidden="true">&lt; </span>Back</a>
         <p className="kicker">Status</p>
         <h1>Site <span className="nowrap">status<span className="cursor" aria-hidden="true" /></span></h1>
-        <p className="lead">
-          Every release of this site and how it went, plus uptime. About every 30 minutes GitHub runs the same tests a
-          release has to pass against the live site, and the result lands here.
-        </p>
 
         {failed ? (
           <p className="note">Couldn't load the status right now.</p>
         ) : (
           <div aria-busy={!data}>
             <h2 className="status-heading">Uptime</h2>
+            {/* How the checks work, folded away so the numbers come first. Same dropdown as the Work page sections. */}
+            <details className="project-section status-about">
+              <summary><h3>How uptime is checked</h3></summary>
+              <div className="project-section-body">
+                <p>
+                  About every 30 minutes, GitHub runs the same tests a release has to pass against the live site. Each
+                  result is one block in the strip below. A short outage between two checks won't show up.
+                </p>
+              </div>
+            </details>
             <ul className="grid strava-grid">
               {TILES.map(({ key, label }) => {
                 const w = data?.uptime[key]
