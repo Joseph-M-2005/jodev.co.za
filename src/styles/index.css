@@ -596,6 +596,53 @@ textarea.input { resize: vertical; }
 .site-footer p { margin: 0; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 1rem 2rem; }
 
+/* Page-to-page transitions. Things that are on both pages glide from their old spot to their new one while the
+   rest cross-fades: the logo, heading, kicker, lead, Back, and a home card's text and the part of the page it links
+   to. Each name is used once per page. No support or reduced motion: a plain navigation. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+
+  .site-header { view-transition-name: site-header; }
+  main h1 { view-transition-name: page-title; }
+  .kicker:has(+ h1) { view-transition-name: page-kicker; }
+  .hero .lead, h1 + .lead, .intro-body > .lead:first-child, .cv-role { view-transition-name: page-lead; }
+  .back, .cv-bar > a { view-transition-name: back-link; }
+  /* The big home logo and the header (or CV) logo are the same picture, so it grows or shrinks between them.
+     On phones the big one is hidden, so the header logo keeps the name there. */
+  .brand img, .cv-logo { view-transition-name: logo; }
+  @media (min-width: 900px) {
+    .hero-logo { view-transition-name: logo; }
+    body:has(.hero-logo) .brand img { view-transition-name: none; }
+  }
+  .home-cards li:first-child .kicker, .projects .project:first-child .kicker { view-transition-name: project-kicker; }
+  .home-cards li:first-child h2, .projects .project:first-child h2 { view-transition-name: project-title; }
+  .home-cards li:first-child .card-body p, .projects .project:first-child .project-tagline { view-transition-name: project-text; }
+  .home-cards li:nth-child(2) h2, #running h2 { view-transition-name: running-title; }
+
+  ::view-transition-group(*) { animation-duration: 400ms; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+  ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 250ms; }
+  /* Text keeps its own size while its box moves, instead of stretching to the other page's width */
+  ::view-transition-old(*), ::view-transition-new(*) { inline-size: auto; block-size: auto; }
+  /* The logo does scale, and stays crisp while it does */
+  ::view-transition-old(logo), ::view-transition-new(logo) { inline-size: 100%; image-rendering: pixelated; }
+  /* The header isn't sticky: from a scrolled page it would otherwise slide down from above */
+  ::view-transition-group(site-header) { animation: none; }
+
+  /* Dropdowns open and close smoothly instead of snapping. Browsers that can't animate to auto height just snap.
+     The clip margin keeps focus outlines inside a dropdown from being cut off at its edges. */
+  details::details-content {
+    interpolate-size: allow-keywords;
+    block-size: 0;
+    opacity: 0;
+    overflow: clip;
+    overflow-clip-margin: calc(var(--b) * 4);
+    transition: block-size 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms, content-visibility 300ms allow-discrete;
+  }
+  details[open]::details-content { block-size: auto; opacity: 1; }
+  .project > summary::before, .project-section summary::before { transition: rotate 200ms ease-out; }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   .cursor, .runner.jumping, .star, .cloud { animation: none; }
   .btn, .level { transition: none; }
