@@ -629,13 +629,15 @@ textarea.input { resize: vertical; }
   ::view-transition-group(site-header) { animation: none; }
 
   /* Dropdowns open and close smoothly instead of snapping. Browsers that can't animate to auto height just snap.
-     The clip margin keeps focus outlines inside a dropdown from being cut off at its edges. */
+     The clip needed for the animation would cut off the pixel edges and focus outlines of things at the sides
+     (Chrome ignores overflow-clip-margin here), so the box reaches a little past them on both sides. */
   details::details-content {
     interpolate-size: allow-keywords;
     block-size: 0;
     opacity: 0;
     overflow: clip;
-    overflow-clip-margin: calc(var(--b) * 4);
+    padding-inline: calc(var(--b) * 4);
+    margin-inline: calc(var(--b) * -4);
     transition: block-size 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms, content-visibility 300ms allow-discrete;
   }
   details[open]::details-content { block-size: auto; opacity: 1; }
