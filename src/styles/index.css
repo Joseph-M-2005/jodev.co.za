@@ -413,6 +413,18 @@ textarea.input { resize: vertical; }
   .flow ol { grid-auto-flow: column; grid-auto-columns: 1fr; max-width: none; }
   .flow li + li::before { top: 50%; left: calc(var(--px) * -3); rotate: none; }
 }
+/* Before vs after step lists (StepList in work.tsx): the first video's steps next to the shorter list for a UI
+   update, which gets the bright edge. Side by side on wide screens, stacked on narrow ones. */
+.step-compare { display: grid; gap: calc(var(--px) * 6); align-items: start; margin: 0 0 calc(var(--px) * 8); }
+@media (min-width: 900px) { .step-compare { grid-template-columns: 3fr 2fr; } }
+.step-list { margin: 0; padding: calc(var(--px) * 5); }
+.step-list.accent { --edge: var(--blue-bright); }
+.step-list ol { display: grid; gap: calc(var(--px) * 4); margin: 0; padding: 0; list-style: none; }
+.step-list li { display: grid; grid-template-columns: calc(var(--fs-ui) * 2) 1fr; gap: calc(var(--px) * 3); }
+.step-num { color: var(--blue-bright); font: var(--fs-ui)/1.5 var(--font-heading); }
+.step-list li strong { display: block; font-size: 1.125rem; }
+.step-list li p { margin: 0; }
+.step-note { margin: calc(var(--px) * 5) 0 0; padding-top: calc(var(--px) * 4); border-top: var(--b) solid var(--shade); }
 /* Blue-green before and after: a full bar for the version with the visitors, an empty track for the other */
 .lanes { display: grid; gap: calc(var(--px) * 6); margin: calc(var(--px) * 6) 0 calc(var(--px) * 8); }
 @media (min-width: 700px) { .lanes { grid-template-columns: 1fr 1fr; } }
