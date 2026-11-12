@@ -1,66 +1,40 @@
 # jodev.co.za
 
-My personal site. React + Vite on the front, a single Cloudflare Worker on the back.
+My personal site.
+Try `curl https://jodev.co.za`
 
-Try `curl https://jodev.co.za` too.
+## The fun parts
 
-## What's in here
+**Pixel art** The look is built to match the pixel art logo. Everything snaps to a pixel grid that scales in steps, so the art is never blurry on any screen size.
 
-- `src/`: the pages (home, work, about, contact, cv) and their components
-- `worker.ts`: the backend. Serves the static build and handles:
-  - `POST /api/contact`: contact form, behind Turnstile and a rate limit. The Worker puts it on a queue and a queue
-    consumer emails it to my inbox over Zoho SMTP, retrying for about half an hour. Anything that still fails goes to a
-    dead-letter queue and is saved in D1 (`contact_failed`). Queues deliver at least once, so a rare duplicate email is possible.
-    Code in `contact.ts`
-  - `/api/strava`: running stats on the About page (see [STRAVA.md](STRAVA.md))
-  - `curl` on `/`: a plain-text card instead of HTML
-  - `/api/status`: deploy history and uptime for the `/status` page (`status.ts`). GitHub Actions writes the rows
-    with `scripts/status-record.ts`: the Deploy workflow records every run, and the Uptime workflow runs the live tests
-    every 30 minutes
-- `test/`: tests that run against a local copy of the Worker, or the live site
+**Page transitions.** Moving between pages, the parts both pages share (the logo, the heading, the Back button, a
+home card and the page it links to) glide from one spot to the next, and the rest fades across. 
+Links start loading in the background when you hover them, so most pages open almost instantly.
 
-## Running it
+**A little game on the About page.** A runner runs between the levels as you pick them, and the last one is "next level", with a link to get in touch.
 
-```sh
-npm install
-npm run dev       # Vite only, no Worker (contact form and Strava won't work)
-npm run preview   # build + full Worker on :8787
-npm test          # build + tests
-```
+**Live running stats.** The About and home pages show my Strava best efforts, this year's totals and my latest run.
+This is using Webhooks so that there is not a cron job checking when a new run is uploaded. this also means new runs are displayed right away. check the full explination.
+[STRAVA.md](STRAVA.md).
 
-For `preview`, put the secrets in `.dev.vars`: `SMTP_PASSWORD`, `TURNSTILE_SECRET`, and the Strava ones listed in [STRAVA.md](STRAVA.md).
+**The contact form doesn't lose messages.** It's behind Cloudflare Turnstile, a bot trap and a rate limiter.
+Messages go on a queue and get emailed to me, it retries for about half an hour when needed. Anything that still fails is
+saved in a database instead of being dropped.
+I won't check it.. but I could if I wanted to..
 
-To test the live site instead:
+**A terminal version.** `curl` the homepage and you get a plain-text card with the logo drawn in coloured blocks.
 
-```sh
-SITE_URL=https://jodev.co.za node --test test/site.test.js
-```
+**Blue-green deploys.** A new version goes up next to the live one with no traffic, gets tested at its own (private) URL,
+and only then takes over. If the live site fails its check after the switch, it rolls back on its own. There's a
+fire drill option that fails the check on purpose, to prove the rollback still works.
 
-## Deploying
+**A status page.** [jodev.co.za/status](https://jodev.co.za/status) shows every deploy and how it went, plus
+uptime. Every 30 minutes the site asks GitHub to run the same tests a release has to pass against the live site.
+They run on GitHub, not Cloudflare, so a check can't go down with the site.
+Although it seems odd to have the site ask for the check itself, Github does run the check itself every hour but its not reliable (as everything in github is)
+May change this check in the future since it would no work if cloudflare was down.. and if thats down so is my site.
 
-Manual, from GitHub Actions > Deploy > Run workflow. It's blue-green:
+## What it's built with
 
-1. Run the tests
-2. Upload the new version with no traffic and test it on its preview URL
-3. Switch traffic over and check the live site
-4. Roll back automatically if that check fails
-
-PRs run the build and tests via the Check workflow.
-
-Every Deploy run is recorded for `/status` (live, rolled back, fire drill, stopped). The Uptime workflow does the same
-for its checks. Both write to D1 with `wrangler d1 execute`, so `CLOUDFLARE_API_TOKEN` needs D1 Edit as well as Workers.
-
-### One-time setup
-
-The contact queues aren't created on deploy (D1 is), so make them once before the first deploy that uses them:
-
-```sh
-npx wrangler queues create jodev-contact
-npx wrangler queues create jodev-contact-dlq
-```
-
-To see messages that never got sent:
-
-```sh
-npx wrangler d1 execute jodev --remote --command "SELECT * FROM contact_failed"
-```
+React, TypeScript, Vite, CSS, Cloudflare Workers, D1, Queues, Access and Turnstile, the Strava API, GitHub Actions
+and the Node test runner. 
