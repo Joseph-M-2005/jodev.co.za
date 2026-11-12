@@ -26,8 +26,9 @@
       { "queue": "jodev-contact-dlq", "max_batch_size": 10, "max_batch_timeout": 5, "max_retries": 3 }
     ]
   },
-  // Daily at 03:00 UTC: Strava stats refresh and retries
-  "triggers": { "crons": ["0 3 * * *"] },
+  // Daily at 03:00 UTC: Strava stats refresh and retries. Every 30 minutes (:13 and :43, matching UPTIME_CRON in
+  // uptime.ts): start the Uptime GitHub workflow, which needs the GITHUB_DISPATCH_TOKEN secret.
+  "triggers": { "crons": ["0 3 * * *", "13,43 * * * *"] },
   // Every uploaded version gets its own public workers.dev Version URL; the blue-green workflow tests green there.
   // The plain jodev.<subdomain>.workers.dev hostname stays off (workers_dev defaults to false when there are routes).
   "preview_urls": true,

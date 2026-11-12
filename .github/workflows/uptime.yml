@@ -1,15 +1,15 @@
 name: Uptime
 
 # Every 30 minutes, the same tests the Deploy workflow uses run against jodev.co.za from GitHub's servers, and the
-# result goes to D1 for jodev.co.za/status. It runs outside Cloudflare on purpose: a check inside the Worker would
-# stop running in exactly the outage it should record. GitHub can start scheduled runs late, and turns them off after
-# 60 days without commits.
+# result goes to D1 for jodev.co.za/status. The checks run outside Cloudflare on purpose: a check inside the Worker
+# would stop running in exactly the outage it should record.
+# What starts them: the Worker's cron (uptime.ts) dispatches this workflow at :13 and :43, because GitHub's own
+# schedule skipped most runs. The schedule below is only a backup for when Cloudflare, and so the Worker's trigger,
+# is down: hourly, at a minute the Worker doesn't use. GitHub turns schedules off after 60 days without commits.
 on:
-  schedule:
-    # Every 30 minutes, at :13 and :43 rather than :00 and :30: everyone schedules on the hour and half hour, so
-    # GitHub starts those runs late or drops them
-    - cron: "13,43 * * * *"
   workflow_dispatch:
+  schedule:
+    - cron: "28 * * * *"
 
 concurrency: uptime
 

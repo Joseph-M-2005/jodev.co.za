@@ -2,8 +2,9 @@ import { WorkerMailer } from 'worker-mailer'
 import { contact, deadLetters, ME, sendBatch, type ContactEnv, type ContactMessage, type Mail, type QueueBatch } from './contact'
 import { status } from './status'
 import { strava, stravaDaily, type Ctx, type StravaEnv } from './strava'
+import { triggerUptime, UPTIME_CRON, type UptimeEnv } from './uptime'
 
-interface Env extends StravaEnv, ContactEnv {
+interface Env extends StravaEnv, ContactEnv, UptimeEnv {
   ASSETS: { fetch: typeof fetch }
   SMTP_PASSWORD: string
 }
@@ -83,8 +84,9 @@ export default {
     return sendBatch(batch, smtp(env))
   },
 
-  // Daily cron (wrangler.jsonc triggers)
-  async scheduled(_controller: unknown, env: Env, ctx: Ctx): Promise<void> {
-    ctx.waitUntil(stravaDaily(env))
+  // Crons (wrangler.jsonc triggers): the 30-minute uptime trigger, and the daily Strava job
+  async scheduled(controller: { cron: string }, env: Env, ctx: Ctx): Promise<void> {
+    if (controller.cron === UPTIME_CRON) ctx.waitUntil(triggerUptime(env))
+    else ctx.waitUntil(stravaDaily(env))
   },
 }
