@@ -691,4 +691,5 @@ textarea.input { resize: vertical; }
 .status-about summary::-webkit-details-marker { display: none; }
 .status-about .project-section-body { padding-bottom: calc(var(--px) * 4); }
 .status-about .project-section-body p { max-width: 65ch; margin: 0; font-size: 1.125rem; }
+.status-about .project-section-body p + p { margin-top: 1em; }
 .status-intro { margin: 0; font-size: 1.125rem; }

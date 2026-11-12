@@ -128,8 +128,17 @@ function Status() {
               <summary><h3>How uptime is checked</h3></summary>
               <div className="project-section-body">
                 <p>
-                  About every 30 minutes, GitHub runs the same tests a release has to pass against the live site. Each
+                  Every 30 minutes, GitHub runs the same tests a release has to pass against the live site. Each
                   result is one block in the strip below. A short outage between two checks won't show up.
+                </p>
+                <p>
+                  The site starts each check itself: a timer on its Cloudflare Worker asks GitHub to run the tests.
+                  I used GitHub's own timer at first, but it skipped most of the runs.
+                </p>
+                <p>
+                  The tests run on GitHub on purpose. If the site checked itself, the check would go down with it.
+                  And if Cloudflare is down and can't start them, GitHub's timer still runs them about once an hour
+                  as a backup.
                 </p>
               </div>
             </details>
