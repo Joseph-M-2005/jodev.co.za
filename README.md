@@ -29,10 +29,13 @@ and only then takes over. If the live site fails its check after the switch, it 
 fire drill option that fails the check on purpose, to prove the rollback still works.
 
 **A status page.** [jodev.co.za/status](https://jodev.co.za/status) shows every deploy and how it went, plus
-uptime. Every 30 minutes the site asks GitHub to run the same tests a release has to pass against the live site.
-They run on GitHub, not Cloudflare, so a check can't go down with the site.
-Although it seems odd to have the site ask for the check itself, Github does run the check itself every hour but its not reliable (as everything in github is)
-May change this check in the future since it would no work if cloudflare was down.. and if thats down so is my site.
+uptime. Every 30 minutes, the site triggers GitHub to run the same tests that a release has to pass, but against the live site. The tests themselves run on GitHub, not Cloudflare. Cloudflare is simply responsible for triggering them.
+
+It's a little odd having the site trigger its own health checks, but I've found GitHub's built-in cron scheduler is very unreliable (pretty much always the case with GitHub).
+
+I may change this in the future, though, as it does mean that if Cloudflare goes down, the checks won't run either. And if Cloudflare is down, so is my site.
+
+(there is the backup schedule run hourly by github.. but I don't trust it)
 
 ## What it's built with
 
