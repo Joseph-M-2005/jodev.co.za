@@ -32,7 +32,8 @@ jobs:
         continue-on-error: true
         env:
           SITE_URL: https://jodev.co.za
-        run: node --test test/site.test.js
+        # A network blip gets another try (scripts/net.ts); failures and retries show on the run's summary page
+        run: npm run test:site --silent
       # The Cloudflare token goes only to this step, never to npm ci or the tests
       - name: Record the check
         continue-on-error: true
@@ -44,4 +45,6 @@ jobs:
       # A red run is the alert: GitHub emails on a failed scheduled workflow
       - name: Fail if the site is down
         if: steps.tests.outcome == 'failure'
-        run: exit 1
+        run: |
+          echo "::error title=Site check failed::The live-site tests failed. What failed is in the annotations above and the job summary below, the full output in the step 'Test the live site'."
+          exit 1

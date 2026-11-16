@@ -5,6 +5,7 @@
 // Needs CLOUDFLARE_API_TOKEN (with D1 Edit) and CLOUDFLARE_ACCOUNT_ID for the remote database.
 import { execFileSync } from 'node:child_process'
 import { STATUS_SCHEMA, checkSql, deploySql, outcomeOf } from '../status.ts'
+import { liveFetch } from './net.ts'
 
 const [kind, ...flags] = process.argv.slice(2)
 const local = flags.includes('--local')
@@ -29,13 +30,21 @@ if (kind === 'deploy') {
   console.log(`Recording deploy: ${outcome}`)
 } else if (kind === 'check') {
   // The test suite's verdict (TESTS=success) and the home page answering in time both count
+  // A network blip on the way gets another try, like the tests (scripts/net.ts)
   const site = env('SITE_URL') || 'https://jodev.co.za'
-  const started = performance.now()
-  const home = await fetch(site, { headers: { 'user-agent': 'Mozilla/5.0 (jodev uptime check)' }, signal: AbortSignal.timeout(10_000) }).catch(() => null)
-  const ms = home ? Math.round(performance.now() - started) : null
-  const ok = env('TESTS') === 'success' && home?.status === 200
+  const tests = env('TESTS')
+  const why: string[] = []
+  if (tests !== 'success') why.push(`the site tests ${tests === 'failure' ? 'failed (see "Test the live site")' : `ended as "${tests || 'not run'}"`}`)
+  const home = await liveFetch(site, { headers: { 'user-agent': 'Mozilla/5.0 (jodev uptime check)' } }, { timeoutMs: 10_000 }).catch((err: Error) => {
+    why.push(err.message)
+    return null
+  })
+  if (home && home.status !== 200) why.push(`the home page answered ${home.status}${home.headers.get('cf-ray') ? ` (cf-ray ${home.headers.get('cf-ray')})` : ''}`)
+  const ok = why.length === 0
+  const ms = home?.ms ?? null
   sql = checkSql({ at: new Date().toISOString(), ok, ms })
   console.log(`Recording check: ${ok ? 'up' : 'DOWN'}${ms === null ? '' : `, ${ms} ms`}`)
+  for (const reason of why) console.log(`  because ${reason}`)
 } else {
   console.error('Usage: node scripts/status-record.ts deploy|check [--local]')
   process.exit(2)
