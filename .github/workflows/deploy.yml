@@ -51,7 +51,7 @@ jobs:
       # Version URLs sit behind Cloudflare Access; the service token gets the tests through, and one test checks
       # that a request without it is refused
       - name: Test green on its Version URL
-        run: node --test test/site.test.js
+        run: npm run test:site --silent
         env:
           SITE_URL: ${{ env.GREEN_URL }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
@@ -77,7 +77,7 @@ jobs:
           SITE_URL: https://jodev.co.za
           REHEARSE: ${{ inputs.rehearse_rollback }}
         run: |
-          sleep 15 && node --test test/site.test.js
+          sleep 15 && npm run test:site --silent
           if [ "$REHEARSE" = true ]; then echo "::warning::Rollback fire drill: failing the live check on purpose"; exit 1; fi
       - name: Roll back to blue
         if: failure() && env.SWITCHED == '1'
@@ -90,7 +90,7 @@ jobs:
         if: failure() && env.SWITCHED == '1'
         env:
           SITE_URL: https://jodev.co.za
-        run: sleep 15 && node --test test/site.test.js
+        run: sleep 15 && npm run test:site --silent
       # One row per run for jodev.co.za/status, however it ended. Never fails the job: a missing row is the worst case.
       # The token needs D1 Edit as well as Workers.
       - name: Record the deploy
