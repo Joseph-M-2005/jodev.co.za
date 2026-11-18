@@ -73,23 +73,27 @@ async function auth(local) {
     body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, code, grant_type: 'authorization_code' }),
   })
   if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`)
-  const { refresh_token: refreshToken, athlete } = await res.json()
+  // Athlete IDs can be 64-bit, too big for a JS number, so read the exact digits (or Strava's id_str)
+  const { refresh_token: refreshToken, athlete } = JSON.parse(await res.text(), (key, value, context) =>
+    key === 'id' && typeof value === 'number' ? context.source : value,
+  )
+  const athleteId = athlete.id_str ?? athlete.id
 
-  const saveLocally = () => appendFileSync('.dev.vars', `\nSTRAVA_REFRESH_TOKEN=${refreshToken}\nSTRAVA_ATHLETE_ID=${athlete.id}\n`)
+  const saveLocally = () => appendFileSync('.dev.vars', `\nSTRAVA_REFRESH_TOKEN=${refreshToken}\nSTRAVA_ATHLETE_ID=${athleteId}\n`)
   if (local) {
     saveLocally()
     console.log('Saved STRAVA_REFRESH_TOKEN and STRAVA_ATHLETE_ID to .dev.vars')
   } else {
     try {
       await secretPut('STRAVA_REFRESH_TOKEN', refreshToken)
-      await secretPut('STRAVA_ATHLETE_ID', String(athlete.id))
+      await secretPut('STRAVA_ATHLETE_ID', athleteId)
     } catch (err) {
       // Never lose an approved token: keep it locally so it can be put into Cloudflare by hand
       saveLocally()
       throw new Error(`${err.message}. The token was saved to .dev.vars instead; put STRAVA_REFRESH_TOKEN and STRAVA_ATHLETE_ID with wrangler secret put (STRAVA.md, Setup).`)
     }
   }
-  console.log(`Connected as athlete ${athlete.id}.`)
+  console.log(`Connected as athlete ${athleteId}.`)
 }
 
 async function subscribe() {
