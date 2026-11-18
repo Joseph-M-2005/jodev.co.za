@@ -27,12 +27,33 @@ export interface StravaEnv {
   ADMIN_TOKEN?: string
 }
 
-type Config = { clientId: string; clientSecret: string; tokenKey: string; athleteId: number; bootstrapRefresh?: string }
+// Strava activity and athlete IDs can be 64-bit, past what a JS number holds exactly, so they're kept as digit strings throughout.
+// A positive integer that fits SQLite's signed 64-bit INTEGER.
+export function isStravaId(id: unknown): id is string {
+  return typeof id === 'string' && /^[1-9]\d{0,18}$/.test(id) && BigInt(id) <= 2n ** 63n - 1n
+}
+
+const ID_KEYS = new Set(['id', 'object_id', 'owner_id'])
+// JSON.parse, but the ID fields come back as their exact digits. Strava's `id_str` wins when it's there.
+// Without the reviver's source text (older runtimes) only safe integers become strings, so a big ID fails the checks instead of being rounded.
+export function parseStrava(text: string): unknown {
+  return JSON.parse(text, function (key: string, value: unknown, context?: { source?: string }) {
+    if (ID_KEYS.has(key) && typeof value === 'number') {
+      return context?.source ?? (Number.isSafeInteger(value) ? String(value) : value)
+    }
+    if (value && typeof value === 'object' && isStravaId((value as { id_str?: unknown }).id_str)) {
+      ;(value as { id: unknown }).id = (value as { id_str: string }).id_str
+    }
+    return value
+  } as Parameters<typeof JSON.parse>[1])
+}
+
+type Config = { clientId: string; clientSecret: string; tokenKey: string; athleteId: string; bootstrapRefresh?: string }
 
 // The settings every Strava call needs, or undefined so callers fail closed
 function config(env: StravaEnv): Config | undefined {
-  const athleteId = Number(env.STRAVA_ATHLETE_ID)
-  if (!env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET || !env.STRAVA_TOKEN_KEY || !Number.isSafeInteger(athleteId) || athleteId <= 0) return
+  const athleteId = env.STRAVA_ATHLETE_ID?.trim()
+  if (!env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET || !env.STRAVA_TOKEN_KEY || !isStravaId(athleteId)) return
   return { clientId: env.STRAVA_CLIENT_ID, clientSecret: env.STRAVA_CLIENT_SECRET, tokenKey: env.STRAVA_TOKEN_KEY, athleteId, bootstrapRefresh: env.STRAVA_REFRESH_TOKEN }
 }
 
@@ -45,18 +66,18 @@ export const EFFORTS = [
 ]
 const RUNS = new Set(['Run', 'TrailRun', 'VirtualRun'])
 
-export type Effort = { name: string; seconds: number; date: string; activityId: number }
+export type Effort = { name: string; seconds: number; date: string; activityId: string }
 export type StravaActivity = {
-  id: number
-  athlete?: { id: number }
+  id: string
+  athlete?: { id: string }
   sport_type?: string
   best_efforts?: { distance: number; elapsed_time: number; start_date_local: string }[]
 }
 
 // The activity's efforts at the tracked distances, only if it's one of the athlete's runs.
 // Elapsed time, like Strava's own PRs; the date only, never the time of day.
-export function trackedEfforts(activity: StravaActivity, athleteId: number): Effort[] {
-  if (activity.athlete?.id !== athleteId || !RUNS.has(activity.sport_type ?? '')) return []
+export function trackedEfforts(activity: StravaActivity, athleteId: string): Effort[] {
+  if (activity.athlete?.id !== athleteId || !isStravaId(activity.id) || !RUNS.has(activity.sport_type ?? '')) return []
   return EFFORTS.flatMap(({ name, metres }) => {
     const effort = activity.best_efforts?.find((e) => Math.abs(e.distance - metres) < 50)
     if (!effort || !Number.isSafeInteger(effort.elapsed_time) || effort.elapsed_time <= 0) return []
@@ -66,24 +87,24 @@ export function trackedEfforts(activity: StravaActivity, athleteId: number): Eff
 
 // One entry from GET /athlete/activities, just the fields we read
 export type StravaSummary = {
-  id: number
-  athlete?: { id: number }
+  id: string
+  athlete?: { id: string }
   sport_type?: string
   visibility?: string
   distance?: number
   moving_time?: number
   start_date_local?: string
 }
-export type LatestRun = { activityId: number; date: string; metres: number; seconds: number }
+export type LatestRun = { activityId: string; date: string; metres: number; seconds: number }
 
 // The newest of the athlete's runs that's visible to Everyone (Strava lists newest first). Date only, never the time of day or the title.
-export function latestRun(activities: StravaSummary[], athleteId: number): LatestRun | null {
+export function latestRun(activities: StravaSummary[], athleteId: string): LatestRun | null {
   const run = activities.find(
     (a) =>
       a.athlete?.id === athleteId &&
       RUNS.has(a.sport_type ?? '') &&
       a.visibility === 'everyone' &&
-      Number.isSafeInteger(a.id) &&
+      isStravaId(a.id) &&
       typeof a.distance === 'number' && a.distance > 0 &&
       Number.isSafeInteger(a.moving_time) && (a.moving_time as number) > 0 &&
       /^\d{4}-\d{2}-\d{2}/.test(a.start_date_local ?? ''),
@@ -94,9 +115,9 @@ export function latestRun(activities: StravaSummary[], athleteId: number): Lates
 
 export type StravaEvent = {
   object_type: 'activity' | 'athlete'
-  object_id: number
+  object_id: string
   aspect_type: 'create' | 'update' | 'delete'
-  owner_id: number
+  owner_id: string
   subscription_id: number
   event_time: number
   updates?: Record<string, unknown>
@@ -104,10 +125,12 @@ export type StravaEvent = {
 
 // Strava doesn't sign webhook events, so this only decides whether an event is worth acting on.
 // Acting on it always means re-reading the activity from Strava with our own token.
-export function checkEvent(body: unknown, athleteId: number, subscriptionId: number): StravaEvent | undefined {
+// Expects the body from parseStrava, so the IDs are digit strings.
+export function checkEvent(body: unknown, athleteId: string, subscriptionId: number): StravaEvent | undefined {
   if (!body || typeof body !== 'object') return
   const e = body as StravaEvent
-  if (![e.object_id, e.owner_id, e.subscription_id, e.event_time].every((n) => Number.isSafeInteger(n) && n > 0)) return
+  if (!isStravaId(e.object_id) || !isStravaId(e.owner_id)) return
+  if (![e.subscription_id, e.event_time].every((n) => Number.isSafeInteger(n) && n > 0)) return
   if (e.owner_id !== athleteId || e.subscription_id !== subscriptionId) return
   if (e.object_type === 'activity' && ['create', 'update', 'delete'].includes(e.aspect_type)) return e
   if (e.object_type === 'athlete' && e.aspect_type === 'update') return e
@@ -183,11 +206,12 @@ async function api<T>(path: string, token: string): Promise<T | null> {
   const res = await fetch(`https://www.strava.com/api/v3${path}`, { headers: { Authorization: `Bearer ${token}` } })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`Strava ${path.split('/')[1]} request failed: ${res.status}`)
-  return res.json() as Promise<T>
+  return parseStrava(await res.text()) as T
 }
 
 // Saves any effort that beats the stored one. One statement per distance, so two events at once can't put back a slower time.
-async function syncActivity(db: D1, cfg: Config, token: string, activityId: number): Promise<void> {
+// IDs are bound as strings; SQLite's INTEGER columns store them as exact 64-bit integers, and reads CAST them back to text.
+async function syncActivity(db: D1, cfg: Config, token: string, activityId: string): Promise<void> {
   const activity = await api<StravaActivity>(`/activities/${activityId}`, token)
   const efforts = activity ? trackedEfforts(activity, cfg.athleteId) : []
   if (!efforts.length) return
@@ -234,7 +258,7 @@ async function syncLatest(db: D1, cfg: Config, token: string): Promise<void> {
 }
 
 // Runs after the webhook has already answered Strava. Failures are marked so the daily cron retries them.
-async function processEvent(db: D1, cfg: Config, e: { activityId: number; aspect: string; eventTime: number }): Promise<void> {
+async function processEvent(db: D1, cfg: Config, e: { activityId: string; aspect: string; eventTime: number }): Promise<void> {
   const mark = (status: string) =>
     db.prepare('UPDATE strava_events SET status = ? WHERE activity_id = ? AND aspect = ? AND event_time = ?').bind(status, e.activityId, e.aspect, e.eventTime).run()
   try {
@@ -268,15 +292,26 @@ async function handleEvent(db: D1, cfg: Config, event: StravaEvent): Promise<voi
 // What the About page shows: whitelisted fields only, no GPS, maps or times of day
 async function publicData(db: D1) {
   await setup(db)
-  const { results } = await db.prepare('SELECT name, seconds, date, activity_id FROM strava_best_efforts').all<{ name: string; seconds: number; date: string; activity_id: number }>()
+  const { results } = await db
+    .prepare('SELECT name, seconds, date, CAST(activity_id AS TEXT) AS activity_id FROM strava_best_efforts')
+    .all<{ name: string; seconds: number; date: string; activity_id: string }>()
   const stats = await db.prepare('SELECT ytd, updated_at FROM strava_stats WHERE id = 1').first<{ ytd: string; updated_at: string }>()
-  const last = await db.prepare('SELECT activity_id, date, metres, seconds FROM strava_latest_run WHERE id = 1').first<{ activity_id: number; date: string; metres: number; seconds: number }>()
+  const last = await db
+    .prepare('SELECT CAST(activity_id AS TEXT) AS activity_id, date, metres, seconds FROM strava_latest_run WHERE id = 1')
+    .first<{ activity_id: string; date: string; metres: number; seconds: number }>()
   const bestEfforts = EFFORTS.flatMap(({ name }) => {
     const row = results.find((r) => r.name === name)
     return row ? [{ name, seconds: row.seconds, date: row.date, activityId: row.activity_id }] : []
   })
   const latest: LatestRun | null = last ? { activityId: last.activity_id, date: last.date, metres: last.metres, seconds: last.seconds } : null
   return { bestEfforts, ytd: stats ? JSON.parse(stats.ytd) : null, latestRun: latest, updatedAt: stats?.updated_at ?? null }
+}
+
+// The admin sync's activityIds: up to 10, as digit strings. Plain numbers still work while they're small enough to be exact.
+export function adminIds(given: unknown): string[] | undefined {
+  if (!Array.isArray(given) || given.length > 10) return
+  const ids = given.map((id) => (typeof id === 'number' && Number.isSafeInteger(id) ? String(id) : id))
+  return ids.every(isStravaId) ? ids : undefined
 }
 
 const json = (body: object, status = 200, headers: HeadersInit = {}) => Response.json(body, { status, headers })
@@ -322,7 +357,7 @@ export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promis
     if (text.length > 2000) return json({ error: 'Too large' }, 413)
     let body: unknown
     try {
-      body = JSON.parse(text)
+      body = parseStrava(text)
     } catch {
       return json({ error: 'Bad request' }, 400)
     }
@@ -343,14 +378,12 @@ export async function strava(request: Request, env: StravaEnv, ctx: Ctx): Promis
     if (!(await same(request.headers.get('authorization') ?? '', `Bearer ${env.ADMIN_TOKEN}`))) return json({ error: 'Unauthorized' }, 401)
 
     const body = (await request.json().catch(() => null)) as { activityIds?: unknown; stats?: unknown } | null
-    const ids = body?.activityIds ?? []
-    if (!Array.isArray(ids) || ids.length > 10 || !ids.every((id) => typeof id === 'number' && Number.isSafeInteger(id) && id > 0)) {
-      return json({ error: 'activityIds must be up to 10 Strava activity IDs' }, 400)
-    }
+    const ids = adminIds(body?.activityIds ?? [])
+    if (!ids) return json({ error: 'activityIds must be up to 10 Strava activity IDs' }, 400)
     try {
       await setup(env.DB)
       const token = await accessToken(env.DB, cfg)
-      for (const id of ids as number[]) await syncActivity(env.DB, cfg, token, id)
+      for (const id of ids) await syncActivity(env.DB, cfg, token, id)
       if (body?.stats === true) {
         await syncStats(env.DB, cfg, token)
         await syncLatest(env.DB, cfg, token)
@@ -374,8 +407,8 @@ export async function stravaDaily(env: StravaEnv): Promise<void> {
   if (!cfg) return
   await setup(env.DB)
   const { results } = await env.DB
-    .prepare("SELECT activity_id, aspect, event_time FROM strava_events WHERE status = 'failed' LIMIT 20")
-    .all<{ activity_id: number; aspect: string; event_time: number }>()
+    .prepare("SELECT CAST(activity_id AS TEXT) AS activity_id, aspect, event_time FROM strava_events WHERE status = 'failed' LIMIT 20")
+    .all<{ activity_id: string; aspect: string; event_time: number }>()
   for (const r of results) await processEvent(env.DB, cfg, { activityId: r.activity_id, aspect: r.aspect, eventTime: r.event_time })
   try {
     const token = await accessToken(env.DB, cfg)

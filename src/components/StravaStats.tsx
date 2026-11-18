@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import ExternalLink from './ExternalLink'
 
 // Shape of GET /api/strava (strava.ts publicData)
-type Effort = { name: string; seconds: number; date: string; activityId: number }
-type LatestRun = { activityId: number; date: string; metres: number; seconds: number }
+type Effort = { name: string; seconds: number; date: string; activityId: string }
+type LatestRun = { activityId: string; date: string; metres: number; seconds: number }
 export type Data = { bestEfforts: Effort[]; ytd: { runs: number; metres: number; seconds: number } | null; latestRun: LatestRun | null }
 
 const DISTANCES = ['5K', '10K', 'Half Marathon', 'Marathon']

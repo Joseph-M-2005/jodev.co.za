@@ -107,10 +107,10 @@ activities that already hold every best effort:
 ```sh
 curl -X POST https://jodev.co.za/api/strava/admin/sync \
   -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
-  -d '{"activityIds":[16662915293,17467753044],"stats":true}'
+  -d '{"activityIds":["16662915293","17467753044"],"stats":true}'
 ```
 
-The endpoint takes activity IDs only. It fetches them from Strava and runs them through the same "only if
+The endpoint takes activity IDs only, as strings (plain numbers still work while they're small enough to be exact). It fetches them from Strava and runs them through the same "only if
 faster" rule as webhooks. It never accepts times or other data. It then clears the cached copy of
 `/api/strava`, so the new numbers show straight away.
 
@@ -135,6 +135,14 @@ All tables are created on first use (`CREATE TABLE IF NOT EXISTS`), so there are
 | `strava_latest_run` | `id` (always 1), `activity_id`, `date`, `metres`, `seconds` | The newest public run; moving time, date only |
 | `strava_events` | `activity_id`, `aspect`, `event_time`, `status` | Dedupes webhook retries; `pending`, `done` or `failed` |
 
+### Activity and athlete IDs
+
+Strava's IDs can be 64-bit from 1 June 2027, too big for a JavaScript number to hold exactly. So the Worker
+keeps every activity and athlete ID as a string of digits: Strava's JSON is parsed with `parseStrava`, which
+reads the IDs' exact digits (or `id_str` when Strava sends it). The `activity_id` columns stay `INTEGER`,
+which SQLite stores as exact 64-bit values, and every read `CAST`s them back to text. `/api/strava` returns
+`activityId` as a string.
+
 ## Security
 
 Strava access is a personal account, so the design assumes every public URL will be poked at.
@@ -145,14 +153,14 @@ Strava access is a personal account, so the design assumes every public URL will
 | A database export or backup leaking the Strava tokens | Tokens are encrypted with AES-256-GCM before they're stored. The key (`STRAVA_TOKEN_KEY`) is a secret, never in D1. |
 | Fake webhook events (Strava doesn't sign them) | The webhook URL contains a random 256-bit secret; anything else is a 404. Events must name our athlete and our subscription. The event is only a hint: the run is always re-read from Strava with our own token, and checked to be mine. A forged event can at most make the site re-read one of my own runs. |
 | Webhook floods or replays | Rate limited (`STRAVA_LIMIT`), body size capped, each event processed once. |
-| Someone using the admin sync | `Authorization: Bearer` with a random 256-bit token, compared in constant time, rate limited per IP. It only accepts up to 10 numeric activity IDs. |
+| Someone using the admin sync | `Authorization: Bearer` with a random 256-bit token, compared in constant time, rate limited per IP. It only accepts up to 10 activity IDs, each a positive 64-bit integer. |
 | Guessing secrets by timing | Every secret comparison hashes both sides and compares the digests in constant time. |
 | A missing secret leaving something half-open | Each route checks its settings first and answers 404 if anything is missing (CI and tests run that way). |
 | Revoking access in Strava | Strava sends a deauthorization event and the stored tokens are deleted straight away. |
 | Leaking where I live or run | No GPS, maps, routes, start points, run titles or times of day are stored or returned. Dates only. The latest run is only ever one visible to Everyone on Strava. |
 | Too much access | OAuth scope is `read,activity:read`: public and followers-only activities, read only. |
 | Tokens in logs or shell history | Logs only ever include status codes. The setup script pipes the refresh token straight into `wrangler secret put`, so it's never printed or typed. |
-| SQL injection | Every query uses bound parameters; activity IDs must be positive integers. |
+| SQL injection | Every query uses bound parameters; activity IDs must be positive 64-bit integers, checked as digit strings. |
 | Hammering `/api/strava` | Responses are cached at Cloudflare's edge for 5 minutes, so page views barely touch the database. |
 
 There is no public OAuth route on the site at all: the one-time connection happens on my own machine.
